@@ -14,6 +14,7 @@ use App\Http\Controllers\Docente\DocenteController;
 use App\Http\Controllers\Secretaria\SecretariaController;
 use App\Http\Controllers\Admin\FinanceiroController;
 use App\Http\Controllers\Admin\UserController as AdminUsersController;
+use App\Http\Controllers\Docente\PerfilController as PerfilDocenteController;
 
 // Rotas Públicas (Autenticação)
 Auth::routes();
@@ -109,12 +110,18 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 // Rotas para Estudantes
 Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
     Route::get('/estudante', [EstudanteController::class, 'index'])->name('estudante.dashboard');
+    Route::get('/create-profile', [EstudanteController::class, 'createProfile'])->name('estudante.create.profile');
+    Route::post('/store-profile', [EstudanteController::class, 'storeProfile'])->name('estudante.store.profile');
     Route::get('/estudante/matriculas', [EstudanteController::class, 'matriculas'])->name('estudante.matriculas');
     Route::get('/estudante/pagamentos', [EstudanteController::class, 'pagamentos'])->name('estudante.pagamentos');
     Route::get('/estudante/relatorios', [EstudanteController::class, 'relatorios'])->name('estudante.relatorios');
     Route::get('/estudante/notificacoes', [EstudanteController::class, 'notificacoes'])->name('estudante.notificacoes');
     Route::get('/estudante/configuracoes', [EstudanteController::class, 'configuracoes'])->name('estudante.configuracoes');
-    Route::get('/estudante/perfil', [PerfilEstudanteController::class, 'index'])->name('estudante.perfil');
+    Route::get('/estudante/perfil', [PerfilEstudanteController::class, 'index'])->name('estudante.perfil.index');
+    Route::put('/estudante/perfil}', [PerfilEstudanteController::class, 'update'])->name('estudante.perfil.update');
+    Route::get('estudante/notas_frequencia', 'Estudante\NotasFrequenciaController@index');
+    Route::get('estudante/notas_frequencia/notas', 'Estudante\NotasFrequenciaController@notasFrequencia');
+
 
 });
 
@@ -122,6 +129,13 @@ Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
 Route::middleware(['auth', 'check.tipo:docente'])->group(function () {
     Route::get('/docente', [DocenteController::class, 'index'])->name('docente.dashboard');
     Route::get('/docente/disciplinas', [DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
+    //lancar notas de Exames e notas de Frequencia
+    Route::get('/docente/notas_exames', 'Docente\NotasExamesController@index');
+    Route::get('/docente/notas_exames/notas', 'Docente\NotasExamesController@notasExames');
+    Route::get('/docente/notas_frequencia', 'Docente\NotasFrequenciaController@index');
+    Route::get('/docente/notas_frequencia/notas', 'Docente\NotasFrequenciaController@notasFrequencia');
+
+
 });
 
 // Rotas para Secretaria
@@ -147,3 +161,6 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/erro', function () {
+    return view('erro');
+})->name('erro');

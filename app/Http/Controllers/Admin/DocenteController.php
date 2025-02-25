@@ -25,8 +25,9 @@ class DocenteController extends Controller
 
     public function create()
     {
+        $cursos = Curso::pluck('nome', 'id'); // Certifique-se de que existe um Model Curso
         $departamentos = Departamento::pluck('nome', 'id');
-        return view('admin.docentes.create', compact('departamentos'));
+        return view('admin.docentes.create', compact('departamentos','cursos'));
     }
 
     public function store(Request $request)
@@ -40,7 +41,9 @@ class DocenteController extends Controller
             'formacao' => 'required|string|max:255',
             'anos_experiencia' => 'nullable|integer',
             'status' => 'required|in:Ativo,Inativo',
-            'foto_perfil' => 'nullable|image|max:2048'
+            'foto_perfil' => 'nullable|image|max:2048',
+            'cursos' => 'required|array',
+            'cursos.*' => 'exists:cursos,id'
         ]);
 
         DB::beginTransaction();
@@ -53,11 +56,13 @@ class DocenteController extends Controller
                 'telefone' => $validated['telefone'],
                 'tipo' => 'docente',
             ]);
+            
             if ($request->hasFile('foto_perfil')) {
                 $path = $request->file('foto_perfil')->store('perfil', 'public');
                 $user->foto_perfil = $path;
                 $user->save();
             }
+            
             // Create docente
             $docente = Docente::create([
                 'user_id' => $user->id,
@@ -66,12 +71,18 @@ class DocenteController extends Controller
                 'anos_experiencia' => $validated['anos_experiencia'],
                 'status' => $validated['status']
             ]);
+            
+            // Associar cursos ao docente
+            if ($request->has('cursos')) {
+                $docente->cursos()->attach($request->cursos);
+            }
+            
             DB::commit();
             return redirect()->route('admin.docentes.show', $docente->id)
                 ->with('success', 'Docente cadastrado com sucesso!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erro ao cadastrar docente. Por favor, tente novamente.')
+            return back()->with('error', 'Erro ao cadastrar docente: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -101,7 +112,9 @@ class DocenteController extends Controller
             'formacao' => 'required|string|max:255',
             'anos_experiencia' => 'nullable|integer',
             'status' => 'required|in:Ativo,Inativo',
-            'foto_perfil' => 'nullable|image|max:2048'
+            'foto_perfil' => 'nullable|image|max:2048',
+            'cursos' => 'required|array',
+            'cursos.*' => 'exists:cursos,id'
         ]);
 
         DB::beginTransaction();
@@ -112,11 +125,13 @@ class DocenteController extends Controller
                 'email' => $validated['email'],
                 'telefone' => $validated['telefone'],
             ]);
+            
             if ($request->hasFile('foto_perfil')) {
                 $path = $request->file('foto_perfil')->store('perfil', 'public');
                 $docente->user->foto_perfil = $path;
                 $docente->user->save();
             }
+            
             // Update docente
             $docente->update([
                 'departamento_id' => $validated['departamento_id'],
@@ -124,12 +139,18 @@ class DocenteController extends Controller
                 'anos_experiencia' => $validated['anos_experiencia'],
                 'status' => $validated['status']
             ]);
+            
+            // Atualizar cursos
+            if ($request->has('cursos')) {
+                $docente->cursos()->sync($request->cursos);
+            }
+            
             DB::commit();
             return redirect()->route('admin.docentes.show', $docente->id)
                 ->with('success', 'Dados do docente atualizados com sucesso!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erro ao atualizar dados do docente. Por favor, tente novamente.')
+            return back()->with('error', 'Erro ao atualizar dados do docente: ' . $e->getMessage())
                 ->withInput();
         }
     }

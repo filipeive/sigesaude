@@ -16,7 +16,8 @@
                 <form action="{{ route('admin.estudantes.destroy', $estudante->id) }}" method="POST" class="d-inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir este estudante?')">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Tem certeza que deseja excluir este estudante?')">
                         <i class="fas fa-trash mr-1"></i> Excluir
                     </button>
                 </form>
@@ -27,8 +28,22 @@
 
 @section('content')
     <!-- Notificações -->
-   {{--  @include('admin.partials.notifications') --}}
+    {{--  @include('admin.partials.notifications') --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fas fa-check mr-1"></i>Sucesso:</h5>
+            {{ session('success') }}
+        </div>
+    @endif
 
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+            <h5><i class="icon fas fa-ban mr-1"></i>Erro:</h5>
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="row">
         <div class="col-md-3">
             <!-- Perfil do Estudante -->
@@ -48,16 +63,19 @@
                                 @switch($estudante->status)
                                     @case('Ativo')
                                         <span class="badge badge-success">Ativo</span>
-                                        @break
+                                    @break
+
                                     @case('Inativo')
                                         <span class="badge badge-danger">Inativo</span>
-                                        @break
+                                    @break
+
                                     @case('Concluído')
                                         <span class="badge badge-info">Concluído</span>
-                                        @break
+                                    @break
+
                                     @case('Desistente')
                                         <span class="badge badge-warning">Desistente</span>
-                                        @break
+                                    @break
                                 @endswitch
                             </span>
                         </li>
@@ -137,16 +155,19 @@
                                     @switch($estudante->status)
                                         @case('Ativo')
                                             <span class="badge badge-success">Ativo</span>
-                                            @break
+                                        @break
+
                                         @case('Inativo')
                                             <span class="badge badge-danger">Inativo</span>
-                                            @break
+                                        @break
+
                                         @case('Concluído')
                                             <span class="badge badge-info">Concluído</span>
-                                            @break
+                                        @break
+
                                         @case('Desistente')
                                             <span class="badge badge-warning">Desistente</span>
-                                            @break
+                                        @break
                                     @endswitch
                                 </dd>
                             </dl>
@@ -166,7 +187,7 @@
     <script>
         $(document).ready(function() {
             // Mantém a aba ativa após recarregar a página
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
                 localStorage.setItem('lastTab', $(e.target).attr('href'));
             });
 

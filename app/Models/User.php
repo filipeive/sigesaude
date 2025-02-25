@@ -42,6 +42,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(Docente::class);
     }
+    /**
+ * Acessor para obter a URL da foto de perfil
+ */
+    public function getFotoPerfilUrlAttribute()
+    {
+        if ($this->foto_perfil) {
+            return asset('storage/' . $this->foto_perfil);
+        }
+        
+        return asset('img/default-profile.png');
+    }
 }
 
 

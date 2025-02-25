@@ -1,78 +1,69 @@
 <?php
-
 namespace App\Http\Controllers\Estudante;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Estudante;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class PerfilController extends Controller
 {
-    public function __construct(){
-        $this->middleware('auth');
-    }
-
-    public function index(){
-        // Exibir a página do perfil do istrador
-        $loggedId = intval(Auth::id());
-        $user = User::find($loggedId);
-
-        if($user){
-            return view('estudante.profile.index', compact('user'));
-        } else {
-            return redirect()->route('');
-        }
-    }
-    
-    public function updateProfile(Request $request)
+    public function index()
     {
-        // Validação dos dados
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore(Auth::id())],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'telefone' => ['nullable', 'string', 'max:255'],
-            'genero' => ['nullable', 'string', 'in:Masculino,Feminino,Outro'],
-            'foto_perfil' => ['nullable', 'image', 'max:1024'], // max 1MB
+        $estudante = Estudante::where('user_id', Auth::id())
+            ->with(['user'])
+            ->first();
+
+        return view('estudante.perfil.index', compact('estudante'));
+    }
+
+    public function edit()
+    {
+        $estudante = Estudante::where('user_id', Auth::id())
+            ->with(['user'])
+            ->first();
+
+        return view('estudante.perfil.edit', compact('estudante'));
+    }
+
+    public function update(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . Auth::id(),
+            'telefone' => 'nullable|string|max:255',
+            'genero' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:8|confirmed',
+            'foto_perfil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-    
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-    
-        try {
-            $user = User::findOrFail(Auth::id());
-    
-            $data = $request->except(['password', 'password_confirmation']);
-    
-            // Atualizar senha apenas se fornecida
-            if ($request->filled('password')) {
-                $data['password'] = Hash::make($request->password);
+
+        $user = User::find(Auth::id());
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->telefone = $request->telefone;
+        $user->genero = $request->genero;
+
+        if ($request->hasFile('foto_perfil')) {
+            // Excluir foto antiga se existir
+            if ($user->foto_perfil) {
+                Storage::delete('public/fotos_perfil/' . $user->foto_perfil);
             }
-    
-            // Upload da nova foto de perfil se fornecida
-            if ($request->hasFile('foto_perfil')) {
-                // Deletar foto antiga se existir
-                if ($user->foto_perfil) {
-                    Storage::disk('public')->delete(str_replace('storage/', '', $user->foto_perfil));
-                }
-    
-                $path = $request->file('foto_perfil')->store('users/profile', 'public');
-                $data['foto_perfil'] = 'storage/' . $path;
-            }
-    
-            $user->update($data);
-    
-            return redirect()->route('admin.perfil.index')
-                ->with('success', 'Perfil atualizado com sucesso!');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Erro ao atualizar perfil: ' . $e->getMessage())
-                ->withInput();
+
+            $foto = $request->file('foto_perfil');
+            $nomeArquivo = time() . '.' . $foto->getClientOriginalExtension();
+            $foto->storeAs('public/fotos_perfil', $nomeArquivo);
+            $user->foto_perfil = $nomeArquivo;
         }
+
+        if ($request->password) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return redirect()->route('estudante.perfil.index')->with('success', 'Perfil atualizado com sucesso!');
     }
 }

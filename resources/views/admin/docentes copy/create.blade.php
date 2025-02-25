@@ -1,10 +1,10 @@
-{{-- resources/views/admin/docentes/edit.blade.php --}}
+{{-- resources/views/admin/docentes/create.blade.php --}}
 @extends('adminlte::page')
 
-@section('title', 'Editar Docente')
+@section('title', isset($docente) ? 'Editar Docente' : 'Novo Docente')
 
 @section('content_header')
-    <h1>Editar Docente</h1>
+    <h1>{{ isset($docente) ? 'Editar Docente' : 'Novo Docente' }}</h1>
 @stop
 
 @section('content')
@@ -14,14 +14,6 @@
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
             <h5><i class="icon fas fa-check mr-1"></i>Sucesso:</h5>
             {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <h5><i class="icon fas fa-ban mr-1"></i>Erro:</h5>
-            {{ session('error') }}
         </div>
     @endif
 
@@ -42,9 +34,12 @@
             <h3 class="card-title">Informações do Docente</h3>
         </div>
 
-        <form action="{{ route('admin.docentes.update', $docente->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ isset($docente) ? route('admin.docentes.update', $docente->id) : route('admin.docentes.store') }}"
+            method="POST" enctype="multipart/form-data">
             @csrf
-            @method('PUT')
+            @if (isset($docente))
+                @method('PUT')
+            @endif
 
             <div class="card-body">
                 <div class="row">
@@ -57,7 +52,7 @@
                             <div class="card-body box-profile">
                                 <div class="text-center">
                                     <img class="profile-user-img img-fluid img-circle"
-                                        src="{{ $docente->user->foto_perfil_url ?? '/img/default-profile.png' }}"
+                                        src="{{ isset($docente) ? $docente->user->foto_perfil_url : '/img/default-profile.png' }}"
                                         alt="Foto do docente">
                                 </div>
                                 <div class="form-group mt-3">
@@ -89,7 +84,7 @@
                                             <label for="name">Nome Completo</label>
                                             <input type="text" class="form-control @error('name') is-invalid @enderror"
                                                 id="name" name="name"
-                                                value="{{ old('name', $docente->user->name) }}"
+                                                value="{{ old('name', isset($docente) ? $docente->user->name : '') }}"
                                                 required>
                                             @error('name')
                                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -100,19 +95,31 @@
                                             <label for="email">E-mail</label>
                                             <input type="email" class="form-control @error('email') is-invalid @enderror"
                                                 id="email" name="email"
-                                                value="{{ old('email', $docente->user->email) }}"
+                                                value="{{ old('email', isset($docente) ? $docente->user->email : '') }}"
                                                 required>
                                             @error('email')
                                                 <span class="invalid-feedback">{{ $message }}</span>
                                             @enderror
                                         </div>
 
+                                        @if (!isset($docente))
+                                            <div class="form-group">
+                                                <label for="password">Senha</label>
+                                                <input type="password"
+                                                    class="form-control @error('password') is-invalid @enderror"
+                                                    id="password" name="password" required>
+                                                @error('password')
+                                                    <span class="invalid-feedback">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        @endif
+
                                         <div class="form-group">
                                             <label for="telefone">Telefone</label>
                                             <input type="text"
-                                                class="form-control @error('telefone') is-invalid @enderror" 
-                                                id="telefone" name="telefone"
-                                                value="{{ old('telefone', $docente->user->telefone) }}"
+                                                class="form-control @error('telefone') is-invalid @enderror" id="telefone"
+                                                name="telefone"
+                                                value="{{ old('telefone', isset($docente) ? $docente->user->telefone : '') }}"
                                                 required>
                                             @error('telefone')
                                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -130,12 +137,13 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="form-group">
-                                            <label for="departamento_id">Departamento</label>
+                                            <label for="departamento">Departamento</label>
+                                            {{-- Aqui o select eh populado com os departamentos do banco de dados - implemente --}}
                                             <select class="form-control @error('departamento_id') is-invalid @enderror"
                                                 id="departamento_id" name="departamento_id" required>
                                                 @foreach ($departamentos as $id => $nome)
                                                     <option value="{{ $id }}"
-                                                        {{ $id == old('departamento_id', $docente->departamento_id) ? 'selected' : '' }}>
+                                                        {{ $id == old('departamento_id', isset($docente) ? $docente->departamento_id : '') ? 'selected' : '' }}>
                                                         {{ $nome }}</option>
                                                 @endforeach
                                             </select>
@@ -143,13 +151,12 @@
                                                 <span class="invalid-feedback">{{ $message }}</span>
                                             @enderror
                                         </div>
-                                        
                                         <div class="form-group">
                                             <label for="formacao">Formação Acadêmica</label>
                                             <input type="text"
-                                                class="form-control @error('formacao') is-invalid @enderror" 
-                                                id="formacao" name="formacao"
-                                                value="{{ old('formacao', $docente->formacao) }}"
+                                                class="form-control @error('formacao') is-invalid @enderror" id="formacao"
+                                                name="formacao"
+                                                value="{{ old('formacao', isset($docente) ? $docente->formacao : '') }}"
                                                 required>
                                             @error('formacao')
                                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -161,7 +168,7 @@
                                             <input type="number"
                                                 class="form-control @error('anos_experiencia') is-invalid @enderror"
                                                 id="anos_experiencia" name="anos_experiencia"
-                                                value="{{ old('anos_experiencia', $docente->anos_experiencia) }}"
+                                                value="{{ old('anos_experiencia', isset($docente) ? $docente->anos_experiencia : '') }}"
                                                 required>
                                             @error('anos_experiencia')
                                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -173,10 +180,10 @@
                                             <select class="form-control @error('status') is-invalid @enderror"
                                                 id="status" name="status" required>
                                                 <option value="Ativo"
-                                                    {{ old('status', $docente->status) == 'Ativo' ? 'selected' : '' }}>
+                                                    {{ old('status', isset($docente) ? $docente->status : '') == 'Ativo' ? 'selected' : '' }}>
                                                     Ativo</option>
                                                 <option value="Inativo"
-                                                    {{ old('status', $docente->status) == 'Inativo' ? 'selected' : '' }}>
+                                                    {{ old('status', isset($docente) ? $docente->status : '') == 'Inativo' ? 'selected' : '' }}>
                                                     Inativo</option>
                                             </select>
                                             @error('status')
@@ -190,7 +197,7 @@
                                                 id="cursos" name="cursos[]" multiple required>
                                                 @foreach ($cursos as $id => $nome)
                                                     <option value="{{ $id }}"
-                                                        {{ in_array($id, old('cursos', $docente->cursos->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                                        {{ in_array($id, old('cursos', isset($docente) ? $docente->cursos->pluck('id')->toArray() : [])) ? 'selected' : '' }}>
                                                         {{ $nome }}
                                                     </option>
                                                 @endforeach
@@ -209,9 +216,10 @@
 
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save mr-1"></i>Atualizar
+                    <i class="fas fa-save mr-1"></i>
+                    {{ isset($docente) ? 'Atualizar' : 'Cadastrar' }}
                 </button>
-                <a href="{{ route('admin.docentes.show', $docente->id) }}" class="btn btn-secondary">
+                <a href="{{ route('admin.docentes.index') }}" class="btn btn-secondary">
                     <i class="fas fa-times mr-1"></i>Cancelar
                 </a>
             </div>

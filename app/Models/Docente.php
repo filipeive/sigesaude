@@ -1,18 +1,16 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-// app/Models/Docente.php
 class Docente extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'departamento',
+        'departamento_id',
         'formacao',
         'anos_experiencia',
         'status'
@@ -27,7 +25,11 @@ class Docente extends Model
     {
         return $this->hasMany(Disciplina::class);
     }
-
+    // Relação com o departamento
+    public function departamento()
+    {
+        return $this->belongsTo(Departamento::class, 'departamento_id');
+    }
     public function cursos()
     {
         return $this->belongsToMany(Curso::class, 'curso_docente');

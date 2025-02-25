@@ -38,6 +38,11 @@ class OrdenarMigracoes extends Command
         '2025_02_21_135555_create_matriculas_table',
         '2025_02_21_135622_create_pagamentos_table',
         '2025_02_21_140257_create_curso_docente_table',
+        
+        // Novas migrations adicionadas
+        '2025_02_25_105055_create_notas_frequencia_table',
+        '2025_02_25_105104_create_notas_exame_table',
+        '2025_02_25_105114_create_media_finals_table',
     ];
 
     /**

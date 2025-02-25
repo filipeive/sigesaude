@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'SIGE-IS',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
+    'logo' => '<b>SIGE</b> - IS',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -398,66 +398,63 @@ return [
             'icon' => 'fas fa-fw fa-user',
             'can' => 'isAdmin',
         ],
+        // Portal de Estudantes
         [
             'text' => 'Portal do Estudante',
             'icon' => 'fas fa-fw fa-user-graduate',
             'can' => 'isEstudante',
             'submenu' => [
                 [
+                'text' => 'Dashboard',
+                'url' => 'estudante',
+                'icon' => 'fas fa-fw fa-tachometer-alt',
+                ],
+                [
                     'text' => 'Notas de Frequência',
-                    'url' => 'estudante/matriculas',
+                    'url' => 'estudante/notas_frequencia',
                     'icon' => 'fas fa-fw fa-graduation-cap',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Exames',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => 'estudante/exames',
                     'icon' => 'fas fa-fw fa-book-open',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Situação Financeira',
                     'url' => 'estudante/pagamentos',
                     'icon' => 'fas fa-fw fa-dollar-sign',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Avaliação do Corpo Docente',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => '#',
                     'icon' => 'fas fa-fw fa-users',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Inscrições',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => '#',
                     'icon' => 'fas fa-fw fa-pencil-alt',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Horários',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => '#',
                     'icon' => 'fas fa-fw fa-calendar-alt',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Material Acadêmico',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => '#',
                     'icon' => 'fas fa-fw fa-file-alt',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Visualizar Dados do Estudante',
                     'url' => 'estudante/perfil',
                     'icon' => 'fas fa-fw fa-id-card',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Ver Plano Curricular',
-                    'url' => '#', // Adicione a URL adequada
+                    'url' => '#',
                     'icon' => 'fas fa-fw fa-book-reader',
-                    'can' => 'isEstudante',
                 ],
-            ]
+            ],
         ],
         [
             'text' => 'Personalizações',
@@ -468,15 +465,13 @@ return [
                     'text' => 'Atualizar meu Perfil',
                     'url' => 'estudante/perfil',
                     'icon' => 'fas fa-fw fa-user-edit',
-                    'can' => 'isEstudante',
                 ],
                 [
                     'text' => 'Configurações',
                     'url' => 'estudante/configuracoes',
                     'icon' => 'fas fa-fw fa-cogs',
-                    'can' => 'isEstudante',
                 ],
-            ]
+            ],
         ],
 
         // Menu para Docente
