@@ -4,7 +4,7 @@
 @section('title', 'Detalhes do Docente')
 
 @section('content_header')
-    <h1>Detalhes do Docente</h1>
+    <h1><i class="fas fa-chalkboard-teacher"></i> Detalhes do Docente</h1>
 @stop
 
 @section('content')
@@ -12,7 +12,7 @@
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <h5><i class="icon fas fa-check mr-1"></i>Sucesso:</h5>
+            <h5><i class="icon fas fa-check mr-1"></i> Sucesso:</h5>
             {{ session('success') }}
         </div>
     @endif
@@ -20,7 +20,7 @@
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">
             <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-            <h5><i class="icon fas fa-ban mr-1"></i>Erro:</h5>
+            <h5><i class="icon fas fa-ban mr-1"></i> Erro:</h5>
             {{ session('error') }}
         </div>
     @endif
@@ -53,10 +53,10 @@
                     </ul>
                     <div class="btn-group w-100">
                         <a href="{{ route('admin.docentes.edit', $docente->id) }}" class="btn btn-primary">
-                            <i class="fas fa-edit mr-1"></i>Editar
+                            <i class="fas fa-edit mr-1"></i> Editar
                         </a>
                         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-delete-docente">
-                            <i class="fas fa-trash mr-1"></i>Excluir
+                            <i class="fas fa-trash mr-1"></i> Excluir
                         </button>
                     </div>
                 </div>

@@ -1,0 +1,33 @@
+[90m= [39m[34;4mApp\Models\Disciplina[39;24m {#6380
+    [34mid[39m: [35m25[39m,
+    [34mnome[39m: "[32mAnatomia Humana[39m",
+    [34mdocente_id[39m: [35m1[39m,
+    [34mcurso_id[39m: [35m1[39m,
+    [34mnivel_id[39m: [35m1[39m,
+    [34mcreated_at[39m: [36mnull[39m,
+    [34mupdated_at[39m: [36mnull[39m,
+    [34mcurso[39m: [34;4mApp\Models\Curso[39;24m {#6387
+      [34mid[39m: [35m1[39m,
+      [34mnome[39m: "[32mMedicina Geral[39m",
+      [34mdescricao[39m: "[32mDuracao 2 anos e meio[39m",
+      [34mcreated_at[39m: "[32m2025-02-23 15:25:20[39m",
+      [34mupdated_at[39m: "[32m2025-02-23 15:25:20[39m",
+    },
+    [34mdocente[39m: [34;4mApp\Models\Docente[39;24m {#6391
+      [34mid[39m: [35m1[39m,
+      [34muser_id[39m: [35m19[39m,
+      [34mformacao[39m: "[32mNihil ullam magnam e[39m",
+      [34manos_experiencia[39m: [35m5[39m,
+      [34mstatus[39m: "[32mAtivo[39m",
+      [34mcreated_at[39m: "[32m2025-02-25 10:19:45[39m",
+      [34mupdated_at[39m: "[32m2025-02-25 10:26:46[39m",
+      [34mdepartamento_id[39m: [35m1[39m,
+    },
+    [34mnivel[39m: [34;4mApp\Models\Nivel[39;24m {#6393
+      [34mid[39m: [35m1[39m,
+      [34mnome[39m: "[32m1º Ano[39m",
+      [34mcreated_at[39m: [36mnull[39m,
+      [34mupdated_at[39m: [36mnull[39m,
+    },
+  }
+

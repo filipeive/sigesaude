@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DocenteController as AdminDocenteController;
 use App\Http\Controllers\Admin\CursoController;
 use App\Http\Controllers\Admin\DisciplinaController;
 use App\Http\Controllers\Admin\MatriculaController;
+use App\Http\Controllers\Admin\InscricaoController;
 use App\Http\Controllers\Admin\PagamentoController;
 use App\Http\Controllers\Estudante\EstudanteController;
 use App\Http\Controllers\Estudante\PerfilController as PerfilEstudanteController;
@@ -15,6 +16,11 @@ use App\Http\Controllers\Secretaria\SecretariaController;
 use App\Http\Controllers\Admin\FinanceiroController;
 use App\Http\Controllers\Admin\UserController as AdminUsersController;
 use App\Http\Controllers\Docente\PerfilController as PerfilDocenteController;
+use App\Http\Controllers\Estudante\NotasFrequenciaController;
+use App\Http\Controllers\Estudante\NotasExameController;
+use App\Http\Controllers\Estudante\NotasDetalhadasController;
+use App\Http\Controllers\Estudante\InscricaoController as InscricaoEstudanteController;
+
 
 // Rotas Públicas (Autenticação)
 Auth::routes();
@@ -83,16 +89,45 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
         Route::put('/{id}', [MatriculaController::class, 'update'])->name('admin.matriculas.update');
         Route::delete('/{id}', [MatriculaController::class, 'destroy'])->name('admin.matriculas.destroy');
     });
+    //incricoes
+    Route::prefix('admin/incricoes')->group(function () {
+        Route::get('/', [InscricaoController::class, 'index'])->name('admin.inscricoes.index');
+        Route::get('/create', [InscricaoController::class, 'create'])->name('admin.inscricoes.create');
+        Route::get('/edit', [InscricaoController::class, 'create'])->name('admin.inscricoes.edit');
+    Route::post('/', [InscricaoController::class, 'store'])->name('admin.inscricoes.store');
+        Route::get('/show/{id}', [InscricaoController::class, 'show'])->name('admin.inscricoes.show');
+        Route::post('inscricoes/{id}/aprovar',[InscricaoController::class, 'aprovar'])->name('admin.inscricoes.aprovar');
+        Route::post('inscricoes/{id}/recusar', [InscricaoController::class,'recusar'])->name('admin.inscricoes.recusar');
+    });
 
     // Pagamentos
-    Route::prefix('admin/pagamentos')->group(function () {
-        Route::get('/', [PagamentoController::class, 'index'])->name('admin.pagamentos.index');
-        Route::get('/create', [PagamentoController::class, 'create'])->name('admin.pagamentos.create');
-        Route::post('/', [PagamentoController::class, 'store'])->name('admin.pagamentos.store');
-        Route::get('/{id}', [PagamentoController::class, 'show'])->name('admin.pagamentos.show');
-        Route::get('/{id}/edit', [PagamentoController::class, 'edit'])->name('admin.pagamentos.edit');
-        Route::put('/{id}', [PagamentoController::class, 'update'])->name('admin.pagamentos.update');
-        Route::delete('/{id}', [PagamentoController::class, 'destroy'])->name('admin.pagamentos.destroy');
+    Route::prefix('admin/pagamentos')->name('admin.pagamentos.')->group(function () {
+        // Rota para listar pagamentos (index)
+        Route::get('/', [PagamentoController::class, 'index'])->name('index');
+
+        // Rota para exibir o formulário de criação (create)
+        Route::get('/create', [PagamentoController::class, 'create'])->name('create');
+
+        // Rota para salvar um novo pagamento (store)
+        Route::post('/', [PagamentoController::class, 'store'])->name('store');
+
+        // Rota para exibir detalhes de um pagamento (show)
+        Route::get('/{pagamento}', [PagamentoController::class, 'show'])->name('show');
+
+        // Rota para exibir o formulário de edição (edit)
+        Route::get('/{pagamento}/edit', [PagamentoController::class, 'edit'])->name('edit');
+
+        // Rota para atualizar um pagamento (update)
+        Route::put('/{pagamento}', [PagamentoController::class, 'update'])->name('update');
+
+        // Rota para excluir um pagamento (destroy)
+        Route::delete('/{pagamento}', [PagamentoController::class, 'destroy'])->name('destroy');
+
+        // Rota para atualizar o status de um pagamento (updateStatus)
+        Route::put('/{pagamento}/status', [PagamentoController::class, 'updateStatus'])->name('updateStatus');
+
+        // Rota para exportar pagamentos (exportar)
+        Route::get('/exportar', [PagamentoController::class, 'exportar'])->name('exportar');
     });
 
     // Financeiro
@@ -104,25 +139,58 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
         Route::get('/{id}/edit', [FinanceiroController::class, 'edit'])->name('admin.financeiro.edit');
         Route::put('/{id}', [FinanceiroController::class, 'update'])->name('admin.financeiro.update');
         Route::delete('/{id}', [FinanceiroController::class, 'destroy'])->name('admin.financeiro.destroy');
+        //relatorio admin.financeiro.relatorios
+        Route::get('/relatorios', [FinanceiroController::class, 'relatorios'])->name('admin.financeiro.relatorios');
+        // admin.financeiro.configuracoes
+        Route::get('/configuracoes', [FinanceiroController::class, 'configuracoes'])->name('admin.financeiro.configuracoes');
     });
 });
 
-// Rotas para Estudantes
-Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
+    // Rotas para Estudantes
+    Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
+    // Dashboard e perfil
     Route::get('/estudante', [EstudanteController::class, 'index'])->name('estudante.dashboard');
     Route::get('/create-profile', [EstudanteController::class, 'createProfile'])->name('estudante.create.profile');
     Route::post('/store-profile', [EstudanteController::class, 'storeProfile'])->name('estudante.store.profile');
-    Route::get('/estudante/matriculas', [EstudanteController::class, 'matriculas'])->name('estudante.matriculas');
-    Route::get('/estudante/pagamentos', [EstudanteController::class, 'pagamentos'])->name('estudante.pagamentos');
-    Route::get('/estudante/relatorios', [EstudanteController::class, 'relatorios'])->name('estudante.relatorios');
-    Route::get('/estudante/notificacoes', [EstudanteController::class, 'notificacoes'])->name('estudante.notificacoes');
-    Route::get('/estudante/configuracoes', [EstudanteController::class, 'configuracoes'])->name('estudante.configuracoes');
     Route::get('/estudante/perfil', [PerfilEstudanteController::class, 'index'])->name('estudante.perfil.index');
-    Route::put('/estudante/perfil}', [PerfilEstudanteController::class, 'update'])->name('estudante.perfil.update');
-    Route::get('estudante/notas_frequencia', 'Estudante\NotasFrequenciaController@index');
-    Route::get('estudante/notas_frequencia/notas', 'Estudante\NotasFrequenciaController@notasFrequencia');
+    Route::put('/estudante/perfil', [PerfilEstudanteController::class, 'update'])->name('estudante.perfil.update');
+    // Matrículas
+    Route::get('/estudante/matriculas', [EstudanteController::class, 'matriculas'])->name('estudante.matriculas');
+    // Inscrições
+    Route::prefix('estudante/inscricoes')->group(function () {
+        Route::get('/', [InscricaoEstudanteController::class, 'index'])->name('estudante.inscricoes.index');
+        Route::get('/create', [InscricaoEstudanteController::class, 'create'])->name('estudante.inscricoes.create');
+        Route::post('/', [InscricaoEstudanteController::class, 'store'])->name('estudante.inscricoes.store');
+        Route::get('/{id}/edit', [InscricaoEstudanteController::class, 'edit'])->name('estudante.inscricoes.edit');
+        Route::put('/{id}', [InscricaoEstudanteController::class, 'update'])->name('estudante.inscricoes.update');
+        Route::get('/{id}', [InscricaoEstudanteController::class, 'show'])->name('estudante.inscricoes.show');
+        Route::delete('/{id}', [InscricaoEstudanteController::class, 'destroy'])->name('estudante.inscricoes.destroy');
+        Route::post('/estudante/inscricoes/{id}/cancelar', [InscricaoEstudanteController::class, 'cancelar'])->name('estudante.inscricoes.cancelar');
+    });
+    // Pagamentos
+    //Route::get('/estudante/pagamentos', [EstudanteController::class, 'pagamentos'])->name('estudante.pagamentos');
+     // Nova rota específica para pagamentos com filtro de ano letivo
+     Route::get('/estudante/pagamentos', [App\Http\Controllers\Estudante\EstudantePagamentosController::class, 'pagamentos'])->name('estudante.pagamentos');
+     // Rota para registrar comprovante de pagamento
+     Route::post('/estudante/pagamentos/registrar', [App\Http\Controllers\Estudante\EstudantePagamentosController::class, 'registrarPagamento'])->name('estudante.registrar.pagamento');
+    // Relatórios
+    Route::get('/estudante/relatorios', [EstudanteController::class, 'relatorios'])->name('estudante.relatorios');
 
+    // Notificações
+    Route::get('/estudante/notificacoes', [EstudanteController::class, 'notificacoes'])->name('estudante.notificacoes');
 
+    // Configurações
+    Route::get('/estudante/configuracoes', [EstudanteController::class, 'configuracoes'])->name('estudante.configuracoes');
+
+    // Notas e Frequência
+    Route::prefix('estudante/notas')->group(function () {
+        //Route::get('/frequencia', [NotasFrequenciaController::class, 'index'])->name('estudante.notas_frequencia.index');
+        Route::get('/frequencia', [NotasFrequenciaController::class, 'notasFrequencia'])->name('estudante.notas_frequencia.notas');
+        Route::get('/frequencia/{id}/detalhes', [NotasDetalhadasController::class, 'index'])->name('estudante.notas_detalhadas.index');
+        Route::post('/detalhes', [NotasDetalhadasController::class, 'store'])->name('estudante.notas_detalhadas.store');
+        Route::get('/exame', [NotasExameController::class, 'index'])->name('estudante.notas_exame.index');
+        Route::get('/exame/notas', [NotasExameController::class, 'notasExame'])->name('estudante.notas_exame.notas');
+    });
 });
 
 // Rotas para Docentes
@@ -156,11 +224,18 @@ Route::middleware(['auth', 'check.tipo:financeiro'])->group(function () {
 });
 
 // Rota Home (Após Login)
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/erro', function () {
-    return view('erro');
-})->name('erro');
+//logout route
+Route::get('/logout', function () {
+    Auth::logout();
+    return redirect('/login');
+})->name('logout');
+
+// Página de erro 404 (Not Found) e 500 (Internal Server Error) fallback
+Route::fallback(function () {
+    return view('errors.404');
+})->name('fallback');

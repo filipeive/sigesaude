@@ -3,127 +3,67 @@
 @section('title', 'Gestão de Docentes')
 
 @section('content_header')
-<div class="container-fluid">
-    <div class="row mb-2">
-        <div class="col-sm-6">
-            <h1><i class="fas fa-chalkboard-teacher"></i> Gestão de Docentes</h1>
-        </div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="m-0 text-dark"><i class="fas fa-chalkboard-teacher"></i> Gestão de Docentes</h1>
+            <ol class="breadcrumb mt-2">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="fas fa-home"></i> Home</a></li>
                 <li class="breadcrumb-item active">Docentes</li>
             </ol>
         </div>
+        <a href="{{ route('admin.docentes.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle mr-1"></i> Novo Docente
+        </a>
     </div>
-</div>
-@endsection
+@stop
 
 @section('content')
-<div class="container-fluid">
-    <div class="card">
+    {{-- Alertas de Sistema --}}
+    <div id="alerts-container">
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle mr-2"></i> {{ session('success') }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-times-circle mr-2"></i> {{ session('error') }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        @endif
+    </div>
+
+    {{-- Card Principal --}}
+    <div class="card card-outline card-primary">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
-                <h3 class="card-title">Lista de Docentes</h3>
-                <a href="{{ route('admin.docentes.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle"></i> Novo Docente
-                </a>
-            </div>
-        </div>
-
-        <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            <!-- Filtros -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="card card-outline card-info collapsed-card">
-                        <div class="card-header">
-                            <h3 class="card-title">Filtros</h3>
-                            <div class="card-tools">
-                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                    <i class="fas fa-plus"></i>
+                <h3 class="card-title">
+                    <i class="fas fa-chalkboard-teacher mr-2"></i> Lista de Docentes
+                </h3>
+                <div class="card-tools">
+                    <form action="{{ route('admin.docentes.index') }}" method="GET">
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <input type="text" name="search" id="search" class="form-control float-right"
+                                placeholder="Pesquisar docente..." value="{{ request('search') }}">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-default">
+                                    <i class="fas fa-search"></i>
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body" style="display: none;">
-                            <form action="{{ route('admin.docentes.index') }}" method="GET">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Nome</label>
-                                            <input type="text" name="name" class="form-control" placeholder="Nome do docente" value="{{ request('name') }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Departamento</label>
-                                            <select name="departamento_id" class="form-control select2">
-                                                <option value="">Todos</option>
-                                                @foreach($departamentos ?? [] as $id => $nome)
-                                                    <option value="{{ $id }}" {{ request('departamento_id') == $id ? 'selected' : '' }}>{{ $nome }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>Status</label>
-                                            <select name="status" class="form-control">
-                                                <option value="">Todos</option>
-                                                <option value="Ativo" {{ request('status') == 'Ativo' ? 'selected' : '' }}>Ativo</option>
-                                                <option value="Inativo" {{ request('status') == 'Inativo' ? 'selected' : '' }}>Inativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label>Curso</label>
-                                            <select name="curso_id" class="form-control select2">
-                                                <option value="">Todos</option>
-                                                @foreach($cursos ?? [] as $id => $nome)
-                                                    <option value="{{ $id }}" {{ request('curso_id') == $id ? 'selected' : '' }}>{{ $nome }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 d-flex align-items-end">
-                                        <div class="form-group w-100">
-                                            <button type="submit" class="btn btn-primary mr-2">
-                                                <i class="fas fa-search"></i> Filtrar
-                                            </button>
-                                            <a href="{{ route('admin.docentes.index') }}" class="btn btn-secondary">
-                                                <i class="fas fa-eraser"></i> Limpar
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
-
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="thead-dark">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Foto</th>
@@ -133,7 +73,7 @@
                             <th>Departamento</th>
                             <th>Formação</th>
                             <th>Status</th>
-                            <th width="150">Ações</th>
+                            <th style="width: 150px">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -163,7 +103,7 @@
                                         {{ $docente->status }}
                                     </span>
                                 </td>
-                                <td>
+                                <td class="text-right">
                                     <div class="btn-group">
                                         <a href="{{ route('admin.docentes.show', $docente->id) }}" 
                                            class="btn btn-info btn-sm" 
@@ -213,33 +153,61 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center">Nenhum docente encontrado.</td>
+                                <td colspan="9" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-search mr-2"></i>Nenhum docente encontrado
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
-            <div class="mt-4">
-                {{ $docentes->links() }}
+        </div>
+        <div class="card-footer clearfix">
+            <div class="float-right" id="pagination">
+                {{ $docentes->links('pagination::bootstrap-5') }}
             </div>
         </div>
     </div>
-</div>
-@endsection
+@stop
 
 @section('css')
-<link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.min.css') }}">
-<link rel="stylesheet" href="{{ asset('plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css') }}">
-@endsection
+    <style>
+        .table td,
+        .table th {
+            vertical-align: middle;
+        }
+
+        .btn-group .btn {
+            margin-right: 2px;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            font-weight: 500;
+        }
+
+        #alerts-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+
+        .alert {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+@stop
 
 @section('js')
-<script src="{{ asset('plugins/select2/js/select2.full.min.js') }}"></script>
-<script>
-    $(function () {
-        $('.select2').select2({
-            theme: 'bootstrap4'
+    <script>
+        $(function () {
+            $('.select2').select2({
+                theme: 'bootstrap4'
+            });
         });
-    });
-</script>
-@endsection
+    </script>
+@stop

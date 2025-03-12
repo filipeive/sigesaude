@@ -42,9 +42,29 @@ class Estudante extends Model
     {
         return $this->hasMany(Matricula::class);
     }
-
+    
     public function pagamentos()
     {
         return $this->hasMany(Pagamento::class);
     }
+    // app/Models/Estudante.php
+    public function nivel()
+    {
+        return $this->belongsTo(Nivel::class, 'nivel_id');
+    }
+
+   // app/Models/Estudante.php
+    public function getNivelAttribute()
+    {
+        // Determinar o nível com base no ano de ingresso e no ano atual
+        $anoIngresso = $this->ano_ingresso;
+        $anoAtual = date('Y');
+        $diferencaAnos = $anoAtual - $anoIngresso;
+        
+        // Assumindo que o nível 1 corresponde ao primeiro ano, etc.
+        $nivelId = min($diferencaAnos + 1, 5); // Limitar ao nível 5
+        
+        return Nivel::find($nivelId);
+    }
+
 }

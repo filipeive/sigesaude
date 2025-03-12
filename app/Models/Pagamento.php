@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,11 +12,20 @@ class Pagamento extends Model
         'estudante_id',
         'valor',
         'data_pagamento',
+        'referencia',
+        'status',
+        'data_vencimento',
     ];
 
     // Relacionamento com estudante
     public function estudante()
     {
         return $this->belongsTo(Estudante::class);
+    }
+
+    // Gerar referência única
+    public static function gerarReferencia()
+    {
+        return 'PAG-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
     }
 }

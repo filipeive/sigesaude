@@ -36,4 +36,10 @@ class Disciplina extends Model
     {
         return $this->hasMany(Matricula::class);
     }
+    public function inscricoes()
+    {
+        return $this->belongsToMany(Inscricao::class, 'inscricao_disciplinas', 'disciplina_id', 'inscricao_id')
+                    ->withPivot('tipo'); // Certifique-se de incluir o campo 'tipo' no pivot
+    }
+   
 }

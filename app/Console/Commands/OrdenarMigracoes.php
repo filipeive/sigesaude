@@ -43,6 +43,13 @@ class OrdenarMigracoes extends Command
         '2025_02_25_105055_create_notas_frequencia_table',
         '2025_02_25_105104_create_notas_exame_table',
         '2025_02_25_105114_create_media_finals_table',
+        '2025_02_26_140830_create_notas_detalhadas_table',
+        '2025_02_26_164202_add_fields_to_pagamentos_table',
+        '2025_02_27_081322_create_inscricoes_table',
+        '2025_03_03_094353_create_update_pagamentos_table',
+        '2025_03_12_144901_create_transacoes_table',
+        '2025_03_12_144919_create_relatorio_financeiros_table',
+        '2025_03_12_144950_create_configuracao_pagamentos_table',
     ];
 
     /**

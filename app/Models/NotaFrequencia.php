@@ -10,7 +10,13 @@ class NotaFrequencia extends Model
 
     protected $table = 'notas_frequencia';
 
-    protected $fillable = ['estudante_id', 'disciplina_id', 'nota_frequencia'];
+    protected $fillable = [
+        'estudante_id',
+        'disciplina_id',
+        'ano_lectivo_id',
+        'nota',
+        'status',
+    ];
 
     public function estudante()
     {
@@ -21,4 +27,10 @@ class NotaFrequencia extends Model
     {
         return $this->belongsTo(Disciplina::class);
     }
+      // Relação com a tabela notas_detalhadas
+      public function notasDetalhadas()
+      {
+          return $this->hasMany(NotaDetalhada::class, 'notas_frequencia_id');
+      }
+
 }

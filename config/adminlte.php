@@ -336,7 +336,6 @@ return [
             'icon' => 'fas fa-fw fa-chalkboard-teacher',
             'can' => 'isAdmin',
         ],
-
         [
             'header' => 'Gestão Acadêmica',
             'icon' => 'fas fa-fw fa-graduation-cap',
@@ -358,6 +357,12 @@ return [
             'text' => 'Matrículas',
             'url' => 'admin/matriculas',
             'icon' => 'fas fa-fw fa-graduation-cap',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Inscrições',
+            'url' => 'admin/incricoes',
+            'icon' => 'fas fa-fw fa-pencil-alt',
             'can' => 'isAdmin',
         ],
         [
@@ -384,20 +389,19 @@ return [
             'icon' => 'fas fa-fw fa-cog',
             'can' => 'isAdmin',
         ],
-        // Meus usuários
         [
             'text' => 'Usuários',
-            'icon' => 'fas fa-users', // Ícone de múltiplos usuários
+            'icon' => 'fas fa-users',
             'url' => 'admin/users',
             'can' => 'isAdmin',
         ],
-        //meu perfil
         [
             'text' => 'Meu Perfil',
             'url' => 'admin/perfil',
             'icon' => 'fas fa-fw fa-user',
             'can' => 'isAdmin',
         ],
+
         // Portal de Estudantes
         [
             'text' => 'Portal do Estudante',
@@ -405,18 +409,18 @@ return [
             'can' => 'isEstudante',
             'submenu' => [
                 [
-                'text' => 'Dashboard',
-                'url' => 'estudante',
-                'icon' => 'fas fa-fw fa-tachometer-alt',
+                    'text' => 'Dashboard',
+                    'url' => 'estudante',
+                    'icon' => 'fas fa-fw fa-tachometer-alt',
                 ],
                 [
                     'text' => 'Notas de Frequência',
-                    'url' => 'estudante/notas_frequencia',
+                    'url' => 'estudante/notas/frequencia',
                     'icon' => 'fas fa-fw fa-graduation-cap',
                 ],
                 [
                     'text' => 'Exames',
-                    'url' => 'estudante/exames',
+                    'url' => '/estudante/notas/exame',
                     'icon' => 'fas fa-fw fa-book-open',
                 ],
                 [
@@ -425,13 +429,8 @@ return [
                     'icon' => 'fas fa-fw fa-dollar-sign',
                 ],
                 [
-                    'text' => 'Avaliação do Corpo Docente',
-                    'url' => '#',
-                    'icon' => 'fas fa-fw fa-users',
-                ],
-                [
                     'text' => 'Inscrições',
-                    'url' => '#',
+                    'url' => 'estudante/inscricoes',
                     'icon' => 'fas fa-fw fa-pencil-alt',
                 ],
                 [
@@ -491,6 +490,22 @@ return [
             'icon' => 'fas fa-fw fa-book',
             'can' => 'isDocente',
         ],
+        [
+            'header' => 'Gestão de Notas',
+            'can' => 'isDocente',
+        ],
+        [
+            'text' => 'Lançar Notas de Exame',
+            'url' => 'docente/notas_exames',
+            'icon' => 'fas fa-fw fa-pencil-alt',
+            'can' => 'isDocente',
+        ],
+        [
+            'text' => 'Lançar Notas de Frequência',
+            'url' => 'docente/notas_frequencia',
+            'icon' => 'fas fa-fw fa-check-circle',
+            'can' => 'isDocente',
+        ],
 
         // Menu para Secretaria
         [
@@ -507,6 +522,22 @@ return [
             'text' => 'Cadastrar Estudante',
             'url' => 'secretaria/estudantes/create',
             'icon' => 'fas fa-fw fa-user-plus',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Matrículas',
+            'url' => 'secretaria/matriculas',
+            'icon' => 'fas fa-fw fa-graduation-cap',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'header' => 'Financeiro',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Pagamentos',
+            'url' => 'secretaria/pagamentos',
+            'icon' => 'fas fa-fw fa-money-bill',
             'can' => 'isSecretaria',
         ],
 
@@ -528,7 +559,6 @@ return [
             'can' => 'isFinanceiro',
         ],
     ],
-
     /*
     |--------------------------------------------------------------------------
     | Menu Filters

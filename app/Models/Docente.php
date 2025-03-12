@@ -24,7 +24,9 @@ class Docente extends Model
     public function disciplinas()
     {
         return $this->hasMany(Disciplina::class);
+
     }
+
     // Relação com o departamento
     public function departamento()
     {
