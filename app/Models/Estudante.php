@@ -66,5 +66,32 @@ class Estudante extends Model
         
         return Nivel::find($nivelId);
     }
+    public function notasFrequencia()
+    {
+        return $this->hasMany(NotaFrequencia::class);
+    }
+    public function notasExame()
+    {
+        return $this->hasMany(NotaExame::class);
+    }
+    public function notasDetalhadas()
+    {
+        return $this->hasMany(NotaDetalhada::class);
+    }
 
+    /**
+     * Obter as médias finais do estudante.
+     */
+    public function mediaFinais()
+    {
+        return $this->hasMany(MediaFinal::class);
+    }
+    public function inscricaoDisciplinas()
+    {
+        return $this->hasMany(InscricaoDisciplina::class);
+    }
+    public function inscricoes()
+    {
+        return $this->hasMany(Inscricao::class);
+    }
 }

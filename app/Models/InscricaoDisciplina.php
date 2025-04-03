@@ -17,6 +17,12 @@ class InscricaoDisciplina extends Model
         'tipo',
     ];
 
+    //relacao estudante
+    public function estudante()
+    {
+        return $this->hasOne(Estudante::class, 'id', 'estudante_id');
+    }
+
     public function inscricao()
     {
         return $this->belongsTo(Inscricao::class);
@@ -26,4 +32,22 @@ class InscricaoDisciplina extends Model
     {
         return $this->belongsTo(Disciplina::class, 'disciplina_id');
     }
+
+    // Relacionamento com notas de frequência (singular)
+    public function notasFrequencia()
+    {
+        return $this->hasOne(NotaFrequencia::class, 'disciplina_id', 'disciplina_id')
+            ->where('estudante_id', function ($query) {
+                $query->select('estudante_id')
+                      ->from('inscricoes')
+                      ->whereColumn('inscricoes.id', 'inscricao_disciplinas.inscricao_id')
+                      ->limit(1);
+            });
+    }
+    // Método auxiliar para obter o ID do estudante
+    public function getEstudanteId()
+    {
+        return optional($this->inscricao)->estudante_id;
+    }
+
 }

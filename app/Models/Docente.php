@@ -36,4 +36,19 @@ class Docente extends Model
     {
         return $this->belongsToMany(Curso::class, 'curso_docente');
     }
+      /**
+     * Relacionamento com as notas de frequência
+     */
+    public function notasFrequencia(): HasMany
+    {
+        return $this->hasMany(NotaFrequencia::class);
+    }
+
+    /**
+     * Relacionamento com as notas de exame
+     */
+    public function notasExame(): HasMany
+    {
+        return $this->hasMany(NotaExame::class);
+    }
 }

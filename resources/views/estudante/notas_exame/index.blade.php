@@ -25,59 +25,118 @@
 
             <!-- Tabela de Notas de Exame -->
             <h3>Notas de Exame</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Disciplina</th>
-                        <th>Média Freq</th>
-                        <th>Exame Normal</th>
-                        <th>Exame Recorrência</th>
-                        <th>Média Final</th>
-                        <th>Resultado Final</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($notasExame as $notaExame)
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>{{ $notaExame->disciplina->nome }}</td>
-                            <td>{{ $notaExame->media_freq }}</td>
-                            <td>{{ $notaExame->exame_normal }}</td>
-                            <td>{{ $notaExame->exame_recorrencia }}</td>
-                            <td>{{ $notaExame->media_final }}</td>
-                            <td>{{ $notaExame->resultado_final }}</td>
+                            <th>Disciplina</th>
+                            <th>Tipo</th>
+                            <th>Média Freq</th>
+                            <th>Exame Normal</th>
+                            <th>Exame Recorrência</th>
+                            <th>Média Final</th>
+                            <th>Resultado Final</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center">Nenhuma nota de exame registrada.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($disciplinasComNotas as $disciplina)
+                            <tr>
+                                <td>{{ $disciplina['disciplina']->nome }}</td>
+                                <td>
+                                    <span class="badge badge-{{ $disciplina['tipo_inscricao'] == 'Normal' ? 'info' : 'warning' }}">
+                                        {{ $disciplina['tipo_inscricao'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($disciplina['media_freq'])
+                                        <span class="badge badge-{{ $disciplina['media_freq'] >= 10 ? 'success' : 'danger' }}">
+                                            {{ $disciplina['media_freq'] }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-secondary">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($disciplina['exame_normal'])
+                                        <span class="badge badge-{{ $disciplina['exame_normal'] >= 10 ? 'success' : 'danger' }}">
+                                            {{ $disciplina['exame_normal'] }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-secondary">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($disciplina['exame_recorrencia'])
+                                        <span class="badge badge-{{ $disciplina['exame_recorrencia'] >= 10 ? 'success' : 'danger' }}">
+                                            {{ $disciplina['exame_recorrencia'] }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-secondary">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($disciplina['media_final'])
+                                        <span class="badge badge-{{ $disciplina['media_final'] >= 10 ? 'success' : 'danger' }}">
+                                            {{ $disciplina['media_final'] }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-secondary">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($disciplina['tem_nota'])
+                                        <span class="badge badge-{{ 
+                                            $disciplina['resultado_final'] == 'Aprovado' || $disciplina['resultado_final'] == 'Dispensado' ? 'success' : 
+                                            ($disciplina['resultado_final'] == 'Pendente' ? 'warning' : 'danger') 
+                                        }}">
+                                            {{ $disciplina['resultado_final'] }}
+                                        </span>
+                                    @else
+                                        <span class="badge badge-warning">Pendente</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center">Nenhuma disciplina inscrita neste ano letivo.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
-            {{-- <!-- Tabela de Médias Finais -->
-            <h3>Médias Finais</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Disciplina</th>
-                        <th>Média Final</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($mediasFinais as $mediaFinal)
-                        <tr>
-                            <td>{{ $mediaFinal->disciplina->nome }}</td>
-                            <td>{{ $mediaFinal->media }}</td>
-                            <td>{{ $mediaFinal->status }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="3" class="text-center">Nenhuma média final registrada.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table> --}}
+            <!-- Legenda -->
+            <div class="mt-4">
+                <h5>Legenda:</h5>
+                <div class="d-flex flex-wrap">
+                    <span class="badge badge-success mr-2 mb-2">Aprovado/Dispensado: Nota ≥ 10</span>
+                    <span class="badge badge-danger mr-2 mb-2">Reprovado: Nota < 10</span>
+                    <span class="badge badge-warning mr-2 mb-2">Pendente: Avaliação em andamento</span>
+                    <span class="badge badge-info mr-2 mb-2">Normal: Primeira inscrição</span>
+                    <span class="badge badge-warning mr-2 mb-2">Em Atraso: Repetição da disciplina</span>
+                    <span class="badge badge-secondary mr-2 mb-2">(-): Nota não registrada</span>
+                </div>
+            </div>
         </div>
     </div>
+@stop
+
+@section('css')
+<style>
+    .badge {
+        font-size: 100%;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+</style>
+@stop
+
+@section('js')
+<script>
+    $(document).ready(function() {
+        // Inicializar tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 @stop

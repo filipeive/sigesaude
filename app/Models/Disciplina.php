@@ -38,8 +38,29 @@ class Disciplina extends Model
     }
     public function inscricoes()
     {
-        return $this->belongsToMany(Inscricao::class, 'inscricao_disciplinas', 'disciplina_id', 'inscricao_id')
-                    ->withPivot('tipo'); // Certifique-se de incluir o campo 'tipo' no pivot
+        return $this->hasMany(Inscricao::class);
+    }
+    public function notasFrequencia()
+    {
+        return $this->hasMany(NotaFrequencia::class);
+    }
+    public function notasExame()
+    {
+        return $this->hasMany(NotaExame::class);
+    }
+    public function anoLectivo()
+    {
+        return $this->belongsTo(AnoLectivo::class);
+    }
+    //notas detalhadas
+    public function notasDetalhadas()
+    {
+        return $this->hasMany(NotaDetalhada::class);
+    }
+    //inscricoes disciplinas
+    public function inscricaoDisciplinas()
+    {
+        return $this->hasMany(InscricaoDisciplina::class);
     }
    
 }

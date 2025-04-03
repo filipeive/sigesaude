@@ -50,6 +50,7 @@ class OrdenarMigracoes extends Command
         '2025_03_12_144901_create_transacoes_table',
         '2025_03_12_144919_create_relatorio_financeiros_table',
         '2025_03_12_144950_create_configuracao_pagamentos_table',
+        '2025_03_28_143851_create_notificacoes_table',
     ];
 
     /**

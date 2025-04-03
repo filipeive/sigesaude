@@ -1,0 +1,141 @@
+/* Estilo para tabelas */
+.table thead th {
+    background-color: #f4f6f9;
+    color: #495057;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    vertical-align: middle !important;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Estilo para inputs de notas */
+.nota-input {
+    width: 80px;
+    text-align: center;
+    margin: 0 auto;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.nota-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transform: scale(1.05);
+}
+
+/* Badges e status */
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4em 0.6em;
+    font-weight: 500;
+}
+
+.badge-pill {
+    border-radius: 10rem;
+}
+
+/* Cards */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-primary.card-outline {
+    border-top: 3px solid #007bff;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+/* Info boxes */
+.info-box {
+    box-shadow: 0 2px 5px rgba(0,0,0,.1);
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.info-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,.1);
+}
+
+.info-box-icon {
+    border-radius: 0.25rem 0 0 0.25rem;
+}
+
+/* Botões de ação */
+.btn-app {
+    min-width: 100px;
+    height: 60px;
+    margin: 0;
+    transition: all 0.3s ease;
+}
+
+.btn-app:hover {
+    transform: translateY(-2px);
+}
+
+/* DataTables */
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 4px;
+    padding: 5px 10px;
+    border: 1px solid #ced4da;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border-radius: 4px;
+    padding: 5px 10px;
+    border: 1px solid #ced4da;
+}
+
+.btn-group > .btn:not(:last-child):not(.dropdown-toggle) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-group > .btn:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Animação para destacar mudanças */
+.highlight {
+    animation: highlight 1s ease-in-out;
+}
+
+@keyframes highlight {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(255, 243, 205, 0.5); }
+    100% { background-color: transparent; }
+}
+
+/* Gráfico */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 250px;
+}
+
+/* Responsividade para telas pequenas */
+@media (max-width: 767.98px) {
+    .btn-app {
+        min-width: 80px;
+        height: 50px;
+        font-size: 12px;
+    }
+    
+    .info-box-content {
+        font-size: 0.9rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+}

@@ -139,7 +139,7 @@
                         
                         <!-- Paginação -->
                         <div class="mt-4">
-                            {{ $matriculas->links() }}
+                            {{ $matriculas->links('pagination::bootstrap-5') }}
                         </div>
                     @endif
                 </div>

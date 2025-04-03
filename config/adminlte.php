@@ -389,6 +389,17 @@ return [
             'icon' => 'fas fa-fw fa-cog',
             'can' => 'isAdmin',
         ],
+        //gerenciar notificaciones
+        [
+            'text' => 'Notificações',
+            'url' => 'admin/notificacoes',
+            'icon' => 'fas fa-fw fa-bell',
+            'can' => 'isAdmin',
+        ],
+        [
+            'header' => 'Gestão de Usuários',
+            'can' => 'isAdmin',
+        ],
         [
             'text' => 'Usuários',
             'icon' => 'fas fa-users',
@@ -478,7 +489,7 @@ return [
             'text' => 'Dashboard',
             'url' => 'docente/dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
-            'can' => 'isDocente', // Visível apenas para docente
+            'can' => 'isDocente', // Visível apenas para docentes
         ],
         [
             'header' => 'Minhas Disciplinas',
@@ -495,18 +506,43 @@ return [
             'can' => 'isDocente',
         ],
         [
+            'text' => 'Lançar Notas de Frequência',
+            'url' => 'docente/notas-frequencia',
+            'icon' => 'fas fa-fw fa-check-circle',
+            'can' => 'isDocente',
+        ],
+        [
             'text' => 'Lançar Notas de Exame',
-            'url' => 'docente/notas_exames',
+            'url' => 'docente/notas-exames',
             'icon' => 'fas fa-fw fa-pencil-alt',
             'can' => 'isDocente',
         ],
         [
-            'text' => 'Lançar Notas de Frequência',
-            'url' => 'docente/notas_frequencia',
-            'icon' => 'fas fa-fw fa-check-circle',
+            'header' => 'Notificações',
             'can' => 'isDocente',
         ],
-
+        [
+            'text' => 'Minhas Notificações',
+            'url' => 'docente/notificacoes',
+            'icon' => 'fas fa-fw fa-bell',
+            'can' => 'isDocente',
+        ],
+        [
+            'text' => 'Enviar Notificações',
+            'url' => 'docente/notificacoes/enviar',
+            'icon' => 'fas fa-fw fa-paper-plane',
+            'can' => 'isDocente',
+        ],
+        [
+            'header' => 'Configurações',
+            'can' => 'isDocente',
+        ],
+        [
+            'text' => 'Meu Perfil',
+            'url' => 'docente/perfil',
+            'icon' => 'fas fa-fw fa-user',
+            'can' => 'isDocente',
+        ],
         // Menu para Secretaria
         [
             'text' => 'Dashboard',

@@ -25,4 +25,9 @@ class Matricula extends Model
     {
         return $this->belongsTo(Disciplina::class);
     }
+    public function inscricaoDisciplinas()
+    {
+        return $this->hasMany(InscricaoDisciplina::class);
+    }
+
 }

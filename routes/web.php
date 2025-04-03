@@ -22,6 +22,7 @@ use App\Http\Controllers\Estudante\NotasDetalhadasController;
 use App\Http\Controllers\Estudante\InscricaoController as InscricaoEstudanteController;
 
 
+
 // Rotas Públicas (Autenticação)
 Auth::routes();
 
@@ -125,7 +126,6 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 
         // Rota para atualizar o status de um pagamento (updateStatus)
         Route::put('/{pagamento}/status', [PagamentoController::class, 'updateStatus'])->name('updateStatus');
-
         // Rota para exportar pagamentos (exportar)
         Route::get('/exportar', [PagamentoController::class, 'exportar'])->name('exportar');
     });
@@ -143,6 +143,16 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
         Route::get('/relatorios', [FinanceiroController::class, 'relatorios'])->name('admin.financeiro.relatorios');
         // admin.financeiro.configuracoes
         Route::get('/configuracoes', [FinanceiroController::class, 'configuracoes'])->name('admin.financeiro.configuracoes');
+    });
+    // Notificações
+    Route::prefix('admin/notificacoes')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\NotificacoesController::class, 'index'])->name('admin.notificacoes.index');
+        Route::get('/create', [App\Http\Controllers\Admin\NotificacoesController::class, 'create'])->name('admin.notificacoes.create');
+        Route::post('/', [App\Http\Controllers\Admin\NotificacoesController::class, 'store'])->name('admin.notificacoes.store');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\NotificacoesController::class, 'destroy'])->name('admin.notificacoes.destroy');
+        Route::post('notificacoes/destroy-multiple', [App\Http\Controllers\Admin\NotificacoesController::class, 'destroyMultiple'])
+        ->name('admin.notificacoes.destroy-multiple');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\NotificacoesController::class, 'edit'])->name('admin.notificacoes.edit');
     });
 });
 
@@ -178,7 +188,9 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 
     // Notificações
     Route::get('/estudante/notificacoes', [EstudanteController::class, 'notificacoes'])->name('estudante.notificacoes');
-
+    Route::get('/notificacoes', [EstudanteController::class, 'notificacoes'])->name('notificacoes');
+    Route::post('/notificacoes/{id}/marcar-lida', [EstudanteController::class, 'marcarComoLida'])->name('estudante.notificacoes.marcar-lida');
+    Route::post('/notificacoes/marcar-todas-lidas', [EstudanteController::class, 'marcarTodasComoLidas'])->name('estudante.notificacoes.marcar-todas-lidas');
     // Configurações
     Route::get('/estudante/configuracoes', [EstudanteController::class, 'configuracoes'])->name('estudante.configuracoes');
 
@@ -194,22 +206,41 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 });
 
 // Rotas para Docentes
-Route::middleware(['auth', 'check.tipo:docente'])->group(function () {
-    Route::get('/docente', [DocenteController::class, 'index'])->name('docente.dashboard');
-    Route::get('/docente/disciplinas', [DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
-    //lancar notas de Exames e notas de Frequencia
-    Route::get('/docente/notas_exames', 'Docente\NotasExamesController@index');
-    Route::get('/docente/notas_exames/notas', 'Docente\NotasExamesController@notasExames');
-    Route::get('/docente/notas_frequencia', 'Docente\NotasFrequenciaController@index');
-    Route::get('/docente/notas_frequencia/notas', 'Docente\NotasFrequenciaController@notasFrequencia');
+Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DocenteController::class, 'index'])->name('docente.dashboard');    
+    
+    // Disciplinas
+    Route::get('/disciplinas', [DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
+    Route::get('/disciplinas/{id}', [DocenteController::class, 'show'])->name('docente.disciplina');
+    
+    // Notas de Frequência
+    Route::get('/notas-frequencia', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'index'])->name('docente.notas_frequencia.index');
+    Route::get('/notas-frequencia/{disciplina}', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'show'])->name('docente.notas_frequencia.show');
+    Route::post('/notas-frequencia/{disciplina}/store', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'store'])->name('docente.notas_frequencia.store');
+    //notas export
+    Route::get('/notas-frequencia/exportar', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'exportar'])->name('docente.notas_frequencia.export');
+    
+    // Notas de Exames
+    Route::get('/notas-exames', [App\Http\Controllers\Docente\NotasExamesController::class, 'index'])->name('docente.notas_exames.index');
+    Route::get('/notas-exames/{disciplina}', [App\Http\Controllers\Docente\NotasExamesController::class, 'show'])->name('docente.notas_exames.show');
+    Route::post('/notas-exames/salvar', [App\Http\Controllers\Docente\NotasExamesController::class, 'salvar'])->name('docente.notas_exames.salvar');
 
+    // Notificações
+    Route::get('/notificacoes', [App\Http\Controllers\Docente\NotificacaoController::class, 'index'])->name('docente.notificacoes');
+    Route::post('/notificacoes/{id}/marcar-lida', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarComoLida'])->name('docente.notificacoes.marcar-lida');
+    Route::post('/notificacoes/marcar-todas-lidas', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarTodasComoLidas'])->name('docente.notificacoes.marcar-todas-lidas');
+    Route::get('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'enviar'])->name('docente.notificacoes.enviar');
+    Route::post('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'salvar'])->name('docente.notificacoes.salvar');
 
+    // Configurações
+    Route::get('/perfil', [DocenteController::class, 'perfil'])->name('docente.perfil');
 });
 
 // Rotas para Secretaria
 Route::middleware(['auth', 'check.tipo:secretaria'])->group(function () {
     Route::get('/secretaria', [SecretariaController::class, 'index'])->name('secretaria.dashboard');
-    Route::resource('estudantes', EstudanteController::class);
+    //Route::resource('estudantes', EstudanteController::class);
     Route::resource('matriculas', MatriculaController::class);
     Route::get('/secretaria/pagamentos', [SecretariaController::class, 'pagamentos'])->name('secretaria.pagamentos');
     Route::get('/secretaria/relatorios', [SecretariaController::class, 'relatorios'])->name('secretaria.relatorios');

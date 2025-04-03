@@ -22,4 +22,5 @@ class NotaDetalhada extends Model
     {
         return $this->belongsTo(NotaFrequencia::class, 'notas_frequencia_id');
     }
+    
 }

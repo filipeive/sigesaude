@@ -1,64 +1,112 @@
 <?php
-
 namespace App\Http\Controllers\Docente;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Disciplina;
+use App\Models\Docente;
 use Illuminate\Support\Facades\Auth;
 
 class DocenteController extends Controller
 {
     public function index()
     {
-        // Obter a role do usuário logado
-        $role = Auth::user()->tipo;
-
-        // Definir o menu com base na role
-        $menu = $this->getMenuForRole($role);
-
-        return view('docente.dashboard', compact('menu'));
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        
+        $disciplinas = Disciplina::where('docente_id', $docente->id)
+            ->get();
+        $totalDisciplinas = $disciplinas->count();
+        
+        // Contagem de estudantes por disciplina
+        $estudantesPorDisciplina = [];
+        foreach ($disciplinas as $disciplina) {
+            $estudantesPorDisciplina[$disciplina->id] = $disciplina->inscricaoDisciplinas()->count();
+        }
+        
+        return view('docente.dashboard', compact('docente', 'disciplinas', 'totalDisciplinas', 'estudantesPorDisciplina'));
     }
-
-    protected function getMenuForRole($role)
+    
+    public function disciplinas()
     {
-        $menu = [
-            // Itens de menu comuns (ex.: profile, logout)
-            [
-                'text' => 'Profile',
-                'url' => 'docente/perfil',
-                'icon' => 'fas fa-fw fa-user',
-                'can' => 'auth',
-            ],
-            [
-                'text' => 'Logout',
-                'url' => 'logout',
-                'icon' => 'fas fa-fw fa-sign-out-alt',
-                'can' => 'auth',
-            ],
-            // Itens específicos para docentes
-            [
-                'text' => 'Dashboard',
-                'url' => 'docente/dashboard',
-                'icon' => 'fas fa-fw fa-tachometer-alt',
-            ],
-            [
-                'header' => 'Minhas Disciplinas',
-            ],
-            [
-                'text' => 'Ver Disciplinas',
-                'url' => 'docente/disciplinas',
-                'icon' => 'fas fa-fw fa-book',
-            ],
-            [
-                'header' => 'Alunos',
-            ],
-            [
-                'text' => 'Listar Alunos',
-                'url' => 'docente/alunos',
-                'icon' => 'fas fa-fw fa-users',
-            ],
-        ];
-
-        return $menu;
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        $disciplinas = Disciplina::where('docente_id', $docente->id)->get();
+        
+        return view('docente.disciplinas', compact('disciplinas'));
     }
+    public function show($id)
+    {
+        $disciplina = Disciplina::findOrFail($id);
+        
+        // Verificar se o docente está autorizado a ver esta disciplina
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        
+        if ($disciplina->docente_id != $docente->id) {
+            return redirect()->route('docente.disciplinas')
+                ->with('error', 'Você não está autorizado a acessar esta disciplina.');
+        }
+        
+        return view('docente.disciplina', compact('disciplina'));
+    }
+    public function edit($id)
+    {
+        $disciplina = Disciplina::findOrFail($id);
+        
+        // Verificar se o docente está autorizado a editar esta disciplina
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        
+        if ($disciplina->docente_id != $docente->id) {
+            return redirect()->route('docente.disciplinas')
+                ->with('error', 'Você não está autorizado a editar esta disciplina.');
+        }
+        
+        return view('docente.edit_disciplina', compact('disciplina'));
+    }
+    public function update(Request $request, $id)
+    {
+        $disciplina = Disciplina::findOrFail($id);
+        
+        // Verificar se o docente está autorizado a editar esta disciplina
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        
+        if ($disciplina->docente_id != $docente->id) {
+            return redirect()->route('docente.disciplinas')
+                ->with('error', 'Você não está autorizado a editar esta disciplina.');
+        }
+        
+        $request->validate([
+            'nome' => 'required|string|max:255',
+            'descricao' => 'nullable|string',
+            'ano_lectivo_id' => 'required|exists:ano_lectivos,id',
+        ]);
+        
+        $disciplina->update($request->all());
+        
+        return redirect()->route('docente.disciplinas')
+            ->with('success', 'Disciplina atualizada com sucesso.');
+    }
+    public function destroy($id)
+    {
+        $disciplina = Disciplina::findOrFail($id);
+        
+        // Verificar se o docente está autorizado a excluir esta disciplina
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        
+        if ($disciplina->docente_id != $docente->id) {
+            return redirect()->route('docente.disciplinas')
+                ->with('error', 'Você não está autorizado a excluir esta disciplina.');
+        }
+        
+        $disciplina->delete();
+        
+        return redirect()->route('docente.disciplinas')
+            ->with('success', 'Disciplina excluída com sucesso.');
+    }
+    //profile docente
+    
 }

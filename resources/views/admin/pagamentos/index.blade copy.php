@@ -17,7 +17,7 @@
                         <th>Valor</th>
                         <th>Data de Vencimento</th>
                         <th>Status</th>
-                        <th>Ações</th>
+                        <th style="width: 150px;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>

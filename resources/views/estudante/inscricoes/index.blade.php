@@ -3,199 +3,91 @@
 @section('title', 'Inscrições')
 
 @section('content_header')
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h1><i class="fas fa-clipboard-list mr-2"></i>Minhas Inscrições</h1>
-        <a href="{{ route('estudante.inscricoes.create') }}" class="btn btn-success">
-            <i class="fas fa-plus mr-1"></i> Nova Inscrição
-        </a>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="m-0 text-dark">
+                <i class="fas fa-clipboard-list mr-2"></i>
+                Minhas Inscrições
+            </h1>
+            <a href="{{ route('estudante.inscricoes.create') }}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="fas fa-plus-circle mr-2"></i> Nova Inscrição
+            </a>
+        </div>
     </div>
 @stop
 
 @section('content')
-    <div class="row">
-        <div class="col-12">
-            <!-- Estatísticas rápidas -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="small-box bg-warning">
-                        <div class="inner">
-                            <h3>{{ $inscricoesPendentes->count() }}</h3>
-                            <p>Inscrições Pendentes</p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <!-- Quick Statistics -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="info-card info-card-warning">
+                            <div class="info-card-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="info-card-content">
+                                <h3>{{ $inscricoesPendentes->count() }}</h3>
+                                <p>Inscrições Pendentes</p>
+                            </div>
                         </div>
-                        <div class="icon">
-                            <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-card info-card-success">
+                            <div class="info-card-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="info-card-content">
+                                <h3>{{ $inscricoesConfirmadas->count() }}</h3>
+                                <p>Inscrições Confirmadas</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-card info-card-info">
+                            <div class="info-card-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="info-card-content">
+                                <h3>{{ $inscricoesConfirmadas->count() + $inscricoesPendentes->count() }}</h3>
+                                <p>Total de Inscrições</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h3>{{ $inscricoesConfirmadas->count() }}</h3>
-                            <p>Inscrições Confirmadas</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h3>{{ $inscricoesConfirmadas->count() + $inscricoesPendentes->count() }}</h3>
-                            <p>Total de Inscrições</p>
-                        </div>
-                        <div class="icon">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Abas para alternar entre as inscrições -->
-            <div class="card">
-                <div class="card-header p-0">
-                    <ul class="nav nav-tabs" id="inscricoes-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" id="pendentes-tab" data-toggle="tab" href="#pendentes" role="tab" aria-controls="pendentes" aria-selected="true">
-                                <i class="fas fa-hourglass-half mr-1"></i> Pendentes 
-                                <span class="badge badge-warning ml-1">{{ $inscricoesPendentes->count() }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="confirmadas-tab" data-toggle="tab" href="#confirmadas" role="tab" aria-controls="confirmadas" aria-selected="false">
-                                <i class="fas fa-check-circle mr-1"></i> Confirmadas 
-                                <span class="badge badge-success ml-1">{{ $inscricoesConfirmadas->count() }}</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="tab-content" id="inscricoes-tabs-content">
-                        <!-- Tab Inscrições Pendentes -->
-                        <div class="tab-pane fade show active" id="pendentes" role="tabpanel" aria-labelledby="pendentes-tab">
-                            @if($inscricoesPendentes->isEmpty())
-                                <div class="text-center py-5">
-                                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-                                    <p class="mb-0">Nenhuma inscrição pendente no momento.</p>
-                                    <a href="{{ route('estudante.inscricoes.create') }}" class="btn btn-outline-success mt-3">
-                                        <i class="fas fa-plus mr-1"></i> Criar Nova Inscrição
-                                    </a>
-                                </div>
-                            @else
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-striped">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Ano Lectivo</th>
-                                                <th>Semestre</th>
-                                                <th>Data</th>
-                                                <th>Referência</th>
-                                                <th>Valor</th>
-                                                <th>Status</th>
-                                                <th class="text-center">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($inscricoesPendentes as $inscricao)
-                                                <tr>
-                                                    <td>{{ $inscricao->anoLectivo->ano }}</td>
-                                                    <td>{{ $inscricao->semestre }}</td>
-                                                    <td>{{ \Carbon\Carbon::parse($inscricao->data_inscricao)->format('d/m/Y') }}</td>
-                                                    <td>
-                                                        @if($inscricao->referencia)
-                                                            <span class="text-monospace">{{ $inscricao->referencia }}</span>
-                                                        @else
-                                                            <span class="text-muted">---</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($inscricao->valor)
-                                                            <span class="font-weight-bold">{{ number_format($inscricao->valor, 2) }} MT</span>
-                                                        @else
-                                                            <span class="text-muted">---</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge badge-warning">Pendente</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <div class="btn-group">
-                                                            <a href="{{ route('estudante.inscricoes.show', $inscricao->id) }}" class="btn btn-sm btn-primary" title="Ver detalhes">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <form action="{{ route('estudante.inscricoes.cancelar', $inscricao->id) }}" method="POST" class="d-inline">
-                                                                @csrf
-                                                                @method('POST')
-                                                                <button type="submit" class="btn btn-sm btn-danger" title="Cancelar inscrição" 
-                                                                    onclick="return confirm('Tem certeza que deseja cancelar esta inscrição? Esta ação não pode ser desfeita.')">
-                                                                    <i class="fas fa-trash-alt"></i>
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @endif
-                        </div>
-                        
-                        <!-- Tab Inscrições Confirmadas -->
-                        <div class="tab-pane fade" id="confirmadas" role="tabpanel" aria-labelledby="confirmadas-tab">
-                            @if($inscricoesConfirmadas->isEmpty())
-                                <div class="text-center py-5">
-                                    <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
-                                    <p class="mb-0">Nenhuma inscrição confirmada no momento.</p>
-                                </div>
-                            @else
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-striped">
-                                        <thead class="thead-light">
-                                            <tr>
-                                                <th>Ano Lectivo</th>
-                                                <th>Semestre</th>
-                                                <th>Data</th>
-                                                <th>Referência</th>
-                                                <th>Valor</th>
-                                                <th>Status</th>
-                                                <th class="text-center">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($inscricoesConfirmadas as $inscricao)
-                                                <tr>
-                                                    <td>{{ $inscricao->anoLectivo->ano }}</td>
-                                                    <td>{{ $inscricao->semestre }}</td>
-                                                    <td>{{ \Carbon\Carbon::parse($inscricao->data_inscricao)->format('d/m/Y') }}</td>
-                                                    <td>
-                                                        @if($inscricao->referencia)
-                                                            <span class="text-monospace">{{ $inscricao->referencia }}</span>
-                                                        @else
-                                                            <span class="text-muted">---</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($inscricao->valor)
-                                                            <span class="font-weight-bold">{{ number_format($inscricao->valor, 2) }} MT</span>
-                                                        @else
-                                                            <span class="text-muted">---</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge badge-success">Confirmada</span>
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <a href="{{ route('estudante.inscricoes.show', $inscricao->id) }}" class="btn btn-sm btn-primary" title="Ver detalhes">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @endif
+                <!-- Registration Tabs -->
+                <div class="card card-outline card-primary">
+                    <div class="card-header p-0">
+                        <ul class="nav nav-tabs nav-fill" id="inscricoes-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="pendentes-tab" data-toggle="tab" href="#pendentes" role="tab">
+                                    <i class="fas fa-hourglass-half mr-2"></i> 
+                                    Pendentes 
+                                    <span class="badge badge-light ml-2">{{ $inscricoesPendentes->count() }}</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="confirmadas-tab" data-toggle="tab" href="#confirmadas" role="tab">
+                                    <i class="fas fa-check-circle mr-2"></i> 
+                                    Confirmadas 
+                                    <span class="badge badge-light ml-2">{{ $inscricoesConfirmadas->count() }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="inscricoes-tabs-content">
+                            <!-- Pending Registrations Tab -->
+                            <div class="tab-pane fade show active" id="pendentes" role="tabpanel">
+                                @include('estudante.inscricoes.partials.pendentes-table')
+                            </div>
+                            
+                            <!-- Confirmed Registrations Tab -->
+                            <div class="tab-pane fade" id="confirmadas" role="tabpanel">
+                                @include('estudante.inscricoes.partials.confirmadas-table')
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -206,90 +98,89 @@
 
 @section('css')
     <style>
-        /* Estilização geral */
-        .small-box {
-            border-radius: 0.5rem;
-            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
-            position: relative;
-            display: block;
+        /* Info Cards */
+        .info-card {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
             margin-bottom: 20px;
-            color: #fff;
         }
-        
-        .small-box .inner {
-            padding: 15px;
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
         }
-        
-        .small-box .icon {
-            color: rgba(0, 0, 0, 0.15);
-            z-index: 0;
-            font-size: 70px;
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            transition: transform .3s linear;
+
+        .info-card-icon {
+            font-size: 3rem;
+            margin-right: 20px;
+            opacity: 0.7;
+            color: #6c757d;
         }
-        
-        .small-box:hover .icon {
-            transform: scale(1.1);
-        }
-        
-        .small-box h3 {
-            font-size: 2.2rem;
+
+        .info-card-warning .info-card-icon { color: #ffc107; }
+        .info-card-success .info-card-icon { color: #28a745; }
+        .info-card-info .info-card-icon { color: #17a2b8; }
+
+        .info-card-content h3 {
+            font-size: 2rem;
             font-weight: 700;
-            margin: 0 0 10px 0;
-            white-space: nowrap;
-            padding: 0;
+            margin-bottom: 5px;
+            color: #343a40;
         }
-        
-        .small-box p {
+
+        .info-card-content p {
+            margin: 0;
+            color: #6c757d;
             font-size: 1rem;
-            margin-bottom: 0;
         }
-        
-        /* Estilos da tabela */
-        .table thead th {
-            border-bottom-width: 1px;
-            font-weight: 600;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.04);
-        }
-        
-        /* Formatação de texto e badges */
-        .text-monospace {
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
-        
-        .badge {
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-            border-radius: 0.25rem;
-        }
-        
-        /* Estilização das abas */
+
+        /* Tabs */
         .nav-tabs .nav-link {
-            color: #495057;
-            background-color: #f8f9fa;
-            border-color: #dee2e6 #dee2e6 #fff;
-            border-radius: 0.25rem 0.25rem 0 0;
-            padding: 0.75rem 1.25rem;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
         }
-        
+
         .nav-tabs .nav-link.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
             font-weight: 600;
-            background-color: #fff;
         }
-        
-        /* Botões e ações */
-        .btn-group > .btn {
-            margin-right: 2px;
+
+        .nav-tabs .badge {
+            background-color: rgba(0,123,255,0.1);
+            color: #007bff;
         }
-        
-        /* Mensagens vazias */
-        .text-muted {
-            color: #6c757d !important;
+
+        /* Table Enhancements */
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+            transition: background-color 0.2s ease;
+        }
+
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .info-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .info-card-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
         }
     </style>
 @stop
@@ -297,27 +188,26 @@
 @section('js')
     <script>
         $(document).ready(function() {
-            console.log('Página de inscrições carregada.');
-            
-            // Mantém a aba ativa ao recarregar a página
-            var activeTab = localStorage.getItem('activeInscricoesTab');
+            // Tab Management
+            $('#inscricoes-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const targetTab = $(e.target).attr('href');
+                localStorage.setItem('activeInscricoesTab', targetTab);
+            });
+
+            // Restore Active Tab
+            const activeTab = localStorage.getItem('activeInscricoesTab');
             if (activeTab) {
                 $('#inscricoes-tabs a[href="' + activeTab + '"]').tab('show');
             }
-            
-            // Salva a aba ativa quando alterada
-            $('#inscricoes-tabs a').on('shown.bs.tab', function (e) {
-                localStorage.setItem('activeInscricoesTab', $(e.target).attr('href'));
-            });
-            
-            // Confirmação personalizada para cancelar inscrição
-            $('.btn-danger').on('click', function(e) {
+
+            // Cancellation Confirmation
+            $('.btn-cancel-inscricao').on('click', function(e) {
                 e.preventDefault();
-                var form = $(this).closest('form');
+                const form = $(this).closest('form');
                 
                 Swal.fire({
                     title: 'Confirmar Cancelamento',
-                    text: "Esta ação não poderá ser revertida. Deseja continuar?",
+                    text: "Tem certeza que deseja cancelar esta inscrição? Esta ação não pode ser desfeita.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#dc3545',

@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 class="m-0 text-dark">Gestão de Usuários</h1>
+            <h1 class="m-0 text-dark"> <i class="fas fa-users mr-2"></i>Gestão de Usuários</h1>
             <ol class="breadcrumb mt-2">
                 <li class="breadcrumb-item"><a href="{{ url('/painel') }}"><i class="fas fa-home"></i> Home</a></li>
                 <li class="breadcrumb-item active">Usuários</li>

@@ -33,4 +33,18 @@ class NotaFrequencia extends Model
           return $this->hasMany(NotaDetalhada::class, 'notas_frequencia_id');
       }
 
+    public function inscricaoDisciplinas()
+    {
+        return $this->hasMany(InscricaoDisciplina::class);
+    }
+    public function inscricao()
+    {
+        return $this->belongsTo(Inscricao::class);
+    }
+
+    public function anoLectivo()
+    {
+        return $this->belongsTo(AnoLectivo::class);
+    }
+
 }

@@ -4,16 +4,17 @@
 @section('title', 'Gestão de Estudantes')
 
 @section('content_header')
-    <div class="row mb-2">
-        <div class="col-sm-6">
-            <h1>Gestão de Estudantes</h1>
-        </div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item"><a href="#">Home</a></li>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="m-0 text-dark"><i class="fas fa-users"></i> Gestão de Estudantes</h1>
+            <ol class="breadcrumb mt-2">
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}"><i class="fas fa-home"></i> Home</a></li>
                 <li class="breadcrumb-item active">Estudantes</li>
             </ol>
         </div>
+        <a href="{{ route('admin.estudantes.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle mr-1"></i> Novo Estudante
+        </a>
     </div>
 @stop
 
@@ -21,27 +22,22 @@
     <div class="row">
         <div class="col-12">
             <div class="card card-outline card-primary">
-                <div class="card-header">
-                    <h3 class="card-title">Lista de Estudantes</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('admin.estudantes.create') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus"></i> Novo Estudante
-                        </a>
-                    </div>
-                </div>
-
+                <h3 class="card-title" style="padding-left:15px; padding-top:15px ">
+                    <i class="fas fa-users mr-2"></i> Lista de Estudantes
+                </h3>
                 <div class="card-body">
                     {{-- Filtros --}}
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <form action="{{ route('admin.estudantes.index') }}" method="GET" class="form-inline">
                                 <div class="input-group mb-2 mr-sm-2">
-                                    <input type="text" name="search" class="form-control" placeholder="Buscar por nome ou matrícula...">
+                                    <input type="text" name="search" class="form-control"
+                                        placeholder="Buscar por nome ou matrícula...">
                                 </div>
                                 <div class="input-group mb-2 mr-sm-2">
                                     <select name="curso" class="form-control">
                                         <option value="">Todos os Cursos</option>
-                                        @foreach($cursos as $id => $nome)
+                                        @foreach ($cursos as $id => $nome)
                                             <option value="{{ $id }}">{{ $nome }}</option>
                                         @endforeach
                                     </select>
@@ -79,14 +75,14 @@
                                     <tr>
                                         <td>
                                             <div class="user-block">
-                                                @if($estudante->user->foto_perfil)
-                                                    <img class="img-circle img-bordered-sm" 
-                                                         src="{{ Storage::url($estudante->user->foto_perfil) }}" 
-                                                         alt="Foto">
+                                                @if ($estudante->user->foto_perfil)
+                                                    <img class="img-circle img-bordered-sm"
+                                                        src="{{ Storage::url($estudante->user->foto_perfil) }}"
+                                                        alt="Foto">
                                                 @else
-                                                    <img class="img-circle img-bordered-sm" 
-                                                         src="{{ asset('vendor/adminlte/dist/img/user.jpg') }}" 
-                                                         alt="Foto">
+                                                    <img class="img-circle img-bordered-sm"
+                                                        src="{{ asset('vendor/adminlte/dist/img/user.jpg') }}"
+                                                        alt="Foto">
                                                 @endif
                                                 <span class="username">
                                                     <a href="#">{{ $estudante->user->name }}</a>
@@ -102,29 +98,26 @@
                                                     'Ativo' => 'badge badge-success',
                                                     'Inativo' => 'badge badge-danger',
                                                     'Concluído' => 'badge badge-info',
-                                                    'Desistente' => 'badge badge-warning'
+                                                    'Desistente' => 'badge badge-warning',
                                                 ];
                                             @endphp
-                                            <span class="{{ $statusClasses[$estudante->status] ?? 'badge badge-secondary' }}">
+                                            <span
+                                                class="{{ $statusClasses[$estudante->status] ?? 'badge badge-secondary' }}">
                                                 {{ $estudante->status }}
                                             </span>
                                         </td>
                                         <td>
                                             <div class="btn-group">
-                                                <a href="{{ route('admin.estudantes.show', $estudante->id) }}" 
-                                                   class="btn btn-info btn-sm" 
-                                                   title="Ver Detalhes">
+                                                <a href="{{ route('admin.estudantes.show', $estudante->id) }}"
+                                                    class="btn btn-info btn-sm" title="Ver Detalhes">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <a href="{{ route('admin.estudantes.edit', $estudante->id) }}" 
-                                                   class="btn btn-warning btn-sm" 
-                                                   title="Editar">
+                                                <a href="{{ route('admin.estudantes.edit', $estudante->id) }}"
+                                                    class="btn btn-warning btn-sm" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <button type="button" 
-                                                        class="btn btn-danger btn-sm" 
-                                                        onclick="confirmDelete({{ $estudante->id }})"
-                                                        title="Excluir">
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                    onclick="confirmDelete({{ $estudante->id }})" title="Excluir">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -149,7 +142,8 @@
     </div>
 
     {{-- Modal de Confirmação de Exclusão --}}
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -198,7 +192,7 @@
             });
 
             // Mostra mensagem de sucesso se existir
-            @if(session('success'))
+            @if (session('success'))
                 Toast.fire({
                     icon: 'success',
                     title: '{{ session('success') }}'
@@ -206,7 +200,7 @@
             @endif
 
             // Mostra mensagem de erro se existir
-            @if(session('error'))
+            @if (session('error'))
                 Toast.fire({
                     icon: 'error',
                     title: '{{ session('error') }}'

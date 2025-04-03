@@ -11,8 +11,13 @@ class MediaFinal extends Model
 
     protected $table = 'media_finals';
 
-    protected $fillable = ['estudante_id', 'disciplina_id', 'media_final'];
-
+    protected $fillable = [
+        'estudante_id',
+        'disciplina_id',
+        'ano_lectivo_id',
+        'media',
+        'status',
+    ];
     public function estudante()
     {
         return $this->belongsTo(Estudante::class);
