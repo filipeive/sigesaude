@@ -88,7 +88,8 @@
     </div>
     @if($notificacoes->hasPages())
         <div class="card-footer clearfix">
-            {{ $notificacoes->links() }}
+            {{-- //corrija a sintax --}}
+            {{ $notificacoes->links('pagination::bootstrap-5') }}
         </div>
     @endif
 </div>

@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\{Pagamento, Estudante};
+use App\Models\Notificacao;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificacaoPagamento;
+
 use Carbon\Carbon;
 
 class PagamentoController extends Controller
@@ -100,7 +103,7 @@ class PagamentoController extends Controller
 
         // Notificar o estudante
         $estudante = $pagamento->estudante;
-        Mail::to($estudante->user->email)->send(new NotificacaoPagamento($pagamento));
+        Notificacao::notificarPagamentoPendente($estudante->user_id, $pagamento);
 
         return redirect()->route('admin.pagamentos.index')
             ->with('success', 'Pagamento criado e notificação enviada com sucesso!');

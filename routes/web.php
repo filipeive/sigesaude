@@ -181,6 +181,9 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
     //Route::get('/estudante/pagamentos', [EstudanteController::class, 'pagamentos'])->name('estudante.pagamentos');
      // Nova rota específica para pagamentos com filtro de ano letivo
      Route::get('/estudante/pagamentos', [App\Http\Controllers\Estudante\EstudantePagamentosController::class, 'pagamentos'])->name('estudante.pagamentos');
+     Route::get('/estudante/pagamentos/{id}', [App\Http\Controllers\Estudante\PagamentoController::class, 'show'])
+    ->name('estudante.pagamentos.show');
+
      // Rota para registrar comprovante de pagamento
      Route::post('/estudante/pagamentos/registrar', [App\Http\Controllers\Estudante\EstudantePagamentosController::class, 'registrarPagamento'])->name('estudante.registrar.pagamento');
     // Relatórios
@@ -205,14 +208,23 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
     });
 });
 
+
 // Rotas para Docentes
 Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(function () {
+    //profile
+    Route::get('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'index'])->name('docente.perfil');
+    Route::get('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'index'])->name('docente.perfil.index');
+    Route::put('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'update'])->name('docente.perfil.update');
+    Route::get('/perfil/criar', [DocenteController::class, 'createProfile'])
+        ->name('docente.profile.create');
+    Route::post('/perfil/store', [DocenteController::class, 'storeProfile'])
+        ->name('docente.profile.store');
     // Dashboard
-    Route::get('/dashboard', [DocenteController::class, 'index'])->name('docente.dashboard');    
+    Route::get('/dashboard', [App\Http\Controllers\Docente\DocenteController::class, 'index'])->name('docente.dashboard');    
     
     // Disciplinas
-    Route::get('/disciplinas', [DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
-    Route::get('/disciplinas/{id}', [DocenteController::class, 'show'])->name('docente.disciplina');
+    Route::get('/disciplinas', [App\Http\Controllers\Docente\DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
+    Route::get('/disciplinas/{id}', [App\Http\Controllers\Docente\DocenteController::class, 'show'])->name('docente.disciplina');
     
     // Notas de Frequência
     Route::get('/notas-frequencia', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'index'])->name('docente.notas_frequencia.index');
@@ -227,14 +239,17 @@ Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(func
     Route::post('/notas-exames/salvar', [App\Http\Controllers\Docente\NotasExamesController::class, 'salvar'])->name('docente.notas_exames.salvar');
 
     // Notificações
-    Route::get('/notificacoes', [App\Http\Controllers\Docente\NotificacaoController::class, 'index'])->name('docente.notificacoes');
-    Route::post('/notificacoes/{id}/marcar-lida', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarComoLida'])->name('docente.notificacoes.marcar-lida');
-    Route::post('/notificacoes/marcar-todas-lidas', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarTodasComoLidas'])->name('docente.notificacoes.marcar-todas-lidas');
-    Route::get('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'enviar'])->name('docente.notificacoes.enviar');
-    Route::post('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'salvar'])->name('docente.notificacoes.salvar');
+    Route::get('/notificacoes', [App\Http\Controllers\Docente\NotificacaoController::class, 'index'])->name('docente.notificacoes.index');
+    Route::get('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'create'])->name('docente.notificacoes.create');
+    Route::post('/notificacoes/enviar', [App\Http\Controllers\Docente\NotificacaoController::class, 'store'])->name('docente.notificacoes.store');
+    Route::post('/notificacoes/{id}/marcar-como-lida', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarComoLida'])->name('docente.notificacoes.marcar_como_lida');
+    Route::post('/notificacoes/marcar-todas-como-lidas', [NotificacaoController::class, 'marcarTodasComoLidas'])->name('docente.notificacoes.marcar_todas_como_lidas');
+    Route::delete('/notificacoes/{id}', [NotificacaoController::class, 'excluir'])->name('docente.notificacoes.excluir');
+    Route::get('/notificacoes/contador', [NotificacaoController::class, 'contadorNaoLidas'])->name('docente.notificacoes.contador');
+    Route::get('/notificacoes/filtrar', [NotificacaoController::class, 'filtrar'])->name('docente.notificacoes.filtrar');
 
     // Configurações
-    Route::get('/perfil', [DocenteController::class, 'perfil'])->name('docente.perfil');
+   // Route::get('/perfil', [DocenteController::class, 'perfil'])->name('docente.perfil');
 });
 
 // Rotas para Secretaria

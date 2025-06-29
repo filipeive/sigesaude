@@ -28,4 +28,9 @@ class Pagamento extends Model
     {
         return 'PAG-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
     }
+    //casts
+    protected $casts = [
+        'data_pagamento' => 'datetime',
+        'data_vencimento' => 'datetime',
+    ];
 }

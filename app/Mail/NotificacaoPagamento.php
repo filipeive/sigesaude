@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Pagamento;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -48,9 +49,10 @@ class NotificacaoPagamento extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.notificacao_pagamento',
         );
     }
+
 
     /**
      * Get the attachments for the message.

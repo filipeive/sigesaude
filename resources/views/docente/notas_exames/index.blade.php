@@ -81,7 +81,7 @@
 
     <!-- Lista de Disciplinas -->
     <div class="row">
-        @foreach($disciplinas as $disciplina)
+        @forelse($disciplinas as $disciplina)
         <div class="col-md-4">
             <div class="card card-outline card-warning h-100 fade-in">
                 <div class="card-header">
@@ -118,9 +118,16 @@
                         <i class="fas fa-file-alt mr-2"></i>Lançar Exames
                     </a>
                 </div>
+                @empty
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Nenhuma disciplina disponível no momento.
+                    </div>
+                </div>
+            @endforelse
             </div>
         </div>
-        @endforeach
     </div>
 </div>
 @endsection
