@@ -11,10 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('docentes', function (Blueprint $table) {
-            $table->foreignId('turma_id')->nullable()->after('departamento_id')
-                ->constrained('turmas')->nullOnDelete();
-        });
+        // Redundante: o campo 'turma_id' já foi adicionado na migration '2026_05_19_add_turma_id_to_docentes_table'
     }
 
     /**
@@ -22,9 +19,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('docentes', function (Blueprint $table) {
-            $table->dropForeign(['turma_id']);
-            $table->dropColumn('turma_id');
-        });
+        //
     }
 };

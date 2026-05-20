@@ -11,10 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('medias_finais', function (Blueprint $table) {
-            $table->foreignId('turma_id')->nullable()->after('disciplina_id')->constrained();
-            $table->foreignId('ano_lectivo_id')->nullable()->after('turma_id')->constrained();
-        });
+        // Redundante: as colunas já são criadas na migration de criação da tabela 'medias_finais'
     }
 
     /**
@@ -22,10 +19,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('medias_finais', function (Blueprint $table) {
-            $table->dropForeign(['ano_lectivo_id']);
-            $table->dropForeign(['turma_id']);
-            $table->dropColumn(['ano_lectivo_id', 'turma_id']);
-        });
+        //
     }
 };

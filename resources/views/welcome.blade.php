@@ -26,7 +26,7 @@
                 <a href="#sobre"><i class="fas fa-info-circle"></i> Sobre</a>
                 <a href="#contatos"><i class="fas fa-phone"></i> Contatos</a>
             </div>
-            <a href="/login" class="btn-login"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</a>
+            <a href="{{ route('login') }}" class="btn-login"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</a>
         </nav>
     <!-- Hero Section -->
     <section class="hero">
@@ -302,7 +302,7 @@
                     <li><a href="#"><i class="fas fa-chevron-right"></i> Início</a></li>
                     <li><a href="#sobre"><i class="fas fa-chevron-right"></i> Sobre</a></li>
                     <li><a href="#contatos"><i class="fas fa-chevron-right"></i> Contatos</a></li>
-                    <li><a href="/login"><i class="fas fa-chevron-right"></i> Login</a></li>
+                    <li><a href="{{ route('login') }}"><i class="fas fa-chevron-right"></i> Login</a></li>
                 </ul>
             </div>
 
