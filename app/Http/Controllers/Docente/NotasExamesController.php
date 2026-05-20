@@ -18,7 +18,39 @@ class NotasExamesController extends Controller
     {
         $user = Auth::user();
         $docente = Docente::where('user_id', $user->id)->first();
-        $disciplinas = Disciplina::where('docente_id', $docente->id)->get();
+        
+        if (!$docente) {
+            return redirect()->route('home')->with('error', 'Perfil de docente não encontrado.');
+        }
+
+        $disciplinas = Disciplina::where('docente_id', $docente->id)
+            ->with(['classe', 'nivel'])
+            ->get();
+
+        $anoLectivo = \App\Models\AnoLectivo::where('status', 'Ativo')->first();
+
+        foreach ($disciplinas as $disciplina) {
+            // Conta estudantes matriculados em turmas da classe desta disciplina
+            $disciplina->estudantes_count = \App\Models\Estudante::whereHas('turma', function($query) use ($disciplina) {
+                $query->where('classe_id', $disciplina->classe_id);
+            })->where('status', 'Ativo')->count();
+
+            // Admitidos (Nota de frequência >= 10)
+            $disciplina->admitidos_count = NotaFrequencia::where('disciplina_id', $disciplina->id)
+                ->when($anoLectivo, function($query) use ($anoLectivo) {
+                    return $query->where('ano_lectivo_id', $anoLectivo->id);
+                })
+                ->where('nota', '>=', 10)
+                ->count();
+
+            // Excluídos (Nota de frequência < 10)
+            $disciplina->excluidos_count = NotaFrequencia::where('disciplina_id', $disciplina->id)
+                ->when($anoLectivo, function($query) use ($anoLectivo) {
+                    return $query->where('ano_lectivo_id', $anoLectivo->id);
+                })
+                ->where('nota', '<', 10)
+                ->count();
+        }
         
         return view('docente.notas_exames.index', compact('disciplinas'));
     }

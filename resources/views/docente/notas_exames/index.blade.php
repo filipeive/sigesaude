@@ -35,9 +35,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>{{ $disciplinas->sum(function($d) { 
-                        return $d->inscricaoDisciplinas()->count(); 
-                    }) }}</h3>
+                    <h3>{{ $disciplinas->sum('estudantes_count') }}</h3>
                     <p>Total de Estudantes</p>
                 </div>
                 <div class="icon">
@@ -48,12 +46,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ $disciplinas->sum(function($d) {
-                        return $d->inscricaoDisciplinas()
-                            ->whereHas('notasFrequencia', function($q) {
-                                $q->where('status', 'Admitido');
-                            })->count();
-                    }) }}</h3>
+                    <h3>{{ $disciplinas->sum('admitidos_count') }}</h3>
                     <p>Admitidos a Exame</p>
                 </div>
                 <div class="icon">
@@ -64,12 +57,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>{{ $disciplinas->sum(function($d) {
-                        return $d->inscricaoDisciplinas()
-                            ->whereHas('notasFrequencia', function($q) {
-                                $q->where('status', 'Excluído');
-                            })->count();
-                    }) }}</h3>
+                    <h3>{{ $disciplinas->sum('excluidos_count') }}</h3>
                     <p>Excluídos</p>
                 </div>
                 <div class="icon">
@@ -93,24 +81,26 @@
                     <div class="mb-3">
                         <p class="mb-1">
                             <i class="fas fa-graduation-cap text-primary mr-2"></i>
-                            <strong>Curso:</strong> {{ $disciplina->curso->nome }}
+                            <strong>Classe:</strong> {{ $disciplina->classe->nome ?? 'N/A' }}
                         </p>
                         <p class="mb-1">
                             <i class="fas fa-layer-group text-info mr-2"></i>
-                            <strong>Nível:</strong> {{ $disciplina->nivel->nome }}
+                            <strong>Nível:</strong> {{ $disciplina->nivel->nome ?? 'N/A' }}
                         </p>
                         <p class="mb-1">
                             <i class="fas fa-users text-success mr-2"></i>
                             <strong>Estudantes:</strong> 
-                            {{ $disciplina->inscricaoDisciplinas()->count() }}
+                            {{ $disciplina->estudantes_count ?? 0 }}
                         </p>
                         <p class="mb-1">
-                            <i class="fas fa-check-circle text-warning mr-2"></i>
-                            <strong>Admitidos:</strong>
-                            {{ $disciplina->inscricaoDisciplinas()
-                                ->whereHas('notasFrequencia', function($q) {
-                                    $q->where('status', 'Admitido');
-                                })->count() }}
+                            <i class="fas fa-check-circle text-success mr-2"></i>
+                            <strong>Admitidos:</strong> 
+                            {{ $disciplina->admitidos_count ?? 0 }}
+                        </p>
+                        <p class="mb-1">
+                            <i class="fas fa-times-circle text-danger mr-2"></i>
+                            <strong>Excluídos:</strong> 
+                            {{ $disciplina->excluidos_count ?? 0 }}
                         </p>
                     </div>
                     <a href="{{ route('docente.notas_exames.show', $disciplina->id) }}" 

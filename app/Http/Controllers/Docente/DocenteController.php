@@ -35,15 +35,22 @@ class DocenteController extends Controller
             return $docente;
         }
 
-        $disciplinas = Disciplina::where('docente_id', $docente->id)->get();
+        $disciplinas = Disciplina::with('classe.turmas')->where('docente_id', $docente->id)->get();
         $totalDisciplinas = $disciplinas->count();
         
         $estudantesPorDisciplina = [];
         foreach ($disciplinas as $disciplina) {
-            $estudantesPorDisciplina[$disciplina->id] = $disciplina->inscricaoDisciplinas()->count();
+            // Conta todos os estudantes matriculados nas turmas que pertencem à classe desta disciplina
+            $totalEstudantes = \App\Models\Estudante::whereHas('turma', function($query) use ($disciplina) {
+                $query->where('classe_id', $disciplina->classe_id);
+            })->where('status', 'Ativo')->count();
+            
+            $estudantesPorDisciplina[$disciplina->id] = $totalEstudantes;
         }
         
-        return view('docente.dashboard', compact('docente', 'disciplinas', 'totalDisciplinas', 'estudantesPorDisciplina'));
+        $anoLectivoAtual = \App\Models\AnoLectivo::where('status', 'Ativo')->first();
+        
+        return view('docente.dashboard', compact('docente', 'disciplinas', 'totalDisciplinas', 'estudantesPorDisciplina', 'anoLectivoAtual'));
     }
 
     public function createProfile()

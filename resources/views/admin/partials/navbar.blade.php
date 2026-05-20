@@ -12,12 +12,10 @@
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-            <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a class="nav-link" href="{{ route('logout') }}"
+               onclick="event.preventDefault(); Swal.fire({title:'Terminar sessão?',text:'Tem certeza que deseja sair?',icon:'question',showCancelButton:true,confirmButtonText:'Sim, sair',cancelButtonText:'Cancelar'}).then((r)=>{if(r.isConfirmed)window.location.href='{{ route('logout') }}'});">
                 <i class="fas fa-sign-out-alt"></i> Sair
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
         </li>
     </ul>
 </nav>

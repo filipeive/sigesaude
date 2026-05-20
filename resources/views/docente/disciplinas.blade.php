@@ -104,8 +104,8 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-gradient-warning">
                 <div class="inner">
-                    <h3>{{ $disciplinas->pluck('curso_id')->unique()->count() }}</h3>
-                    <p>Cursos</p>
+                    <h3>{{ $disciplinas->pluck('classe_id')->unique()->count() }}</h3>
+                    <p>Classes</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-graduation-cap"></i>
@@ -138,7 +138,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-chart-pie mr-1"></i>
-                        Distribuição por Curso
+                        Distribuição por Classe
                     </h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -150,7 +150,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="cursoChart" height="200"></canvas>
+                    <canvas id="classeChart" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -208,7 +208,7 @@
                         <tr>
                             <th width="40">#</th>
                             <th>Disciplina</th>
-                            <th>Curso</th>
+                            <th>Classe</th>
                             <th>Nível</th>
                             <th>Estudantes</th>
                             <th>Progresso</th>
@@ -258,7 +258,7 @@
                                 <td>
                                     <span class="badge badge-light">
                                         <i class="fas fa-university mr-1"></i>
-                                        {{ $disciplina->curso->nome ?? 'N/A' }}
+                                        {{ $disciplina->classe->nome ?? 'N/A' }}
                                     </span>
                                 </td>
                                 <td>
@@ -383,9 +383,9 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Curso</label>
-                                <select class="form-control select2" id="filtroCurso" multiple>
-                                    @foreach($disciplinas->pluck('curso.nome', 'curso_id')->unique() as $id => $nome)
+                                <label>Classe</label>
+                                <select class="form-control select2" id="filtroClasse" multiple>
+                                    @foreach($disciplinas->pluck('classe.nome', 'classe_id')->unique() as $id => $nome)
                                         <option value="{{ $id }}">{{ $nome }}</option>
                                     @endforeach
                                 </select>
@@ -740,7 +740,7 @@ $(document).ready(function() {
     // Filtros avançados
     $('#aplicarFiltros').on('click', function() {
         // Obter valores dos filtros
-        const cursos = $('#filtroCurso').val();
+        const classes = $('#filtroClasse').val();
         const niveis = $('#filtroNivel').val();
         const status = $('#filtroStatus').val();
         const progresso = $('#filtroProgresso').val();
@@ -749,9 +749,9 @@ $(document).ready(function() {
         table.search('').columns().search('').draw();
         
         // Aplicar filtros
-        if (cursos && cursos.length > 0) {
-            const cursosRegex = cursos.join('|');
-            table.column(2).search(cursosRegex, true, false);
+        if (classes && classes.length > 0) {
+            const classesRegex = classes.join('|');
+            table.column(2).search(classesRegex, true, false);
         }
         
         if (niveis && niveis.length > 0) {
@@ -884,21 +884,21 @@ $(document).ready(function() {
     
     // Função para inicializar gráficos
     function initCharts() {
-        // Dados para gráfico de cursos
-        const cursos = {!! json_encode($disciplinas->groupBy('curso.nome')->map->count()) !!};
-        const cursosLabels = Object.keys(cursos);
-        const cursosData = Object.values(cursos);
-        const cursosColors = generateColors(cursosLabels.length);
+        // Dados para gráfico de classes
+        const classes = {!! json_encode($disciplinas->groupBy('classe.nome')->map->count()) !!};
+        const classesLabels = Object.keys(classes);
+        const classesData = Object.values(classes);
+        const classesColors = generateColors(classesLabels.length);
         
-        // Gráfico de pizza - Distribuição por Curso
-        const ctxCurso = document.getElementById('cursoChart').getContext('2d');
-        new Chart(ctxCurso, {
-            type: 'doughnut',
+        // Gráfico de pizza - Distribuição por Classe
+        const ctxClasse = document.getElementById('classeChart').getContext('2d');
+        new Chart(ctxClasse, {
+            type: 'pie',
             data: {
-                labels: cursosLabels,
+                labels: classesLabels,
                 datasets: [{
-                    data: cursosData,
-                    backgroundColor: cursosColors,
+                    data: classesData,
+                    backgroundColor: classesColors,
                     borderWidth: 1
                 }]
             },

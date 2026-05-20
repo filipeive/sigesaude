@@ -113,8 +113,8 @@
                 <div class="card-body p-0">
                     <table class="table table-striped">
                         <tr>
-                            <td><i class="fas fa-graduation-cap text-primary mr-2"></i>Curso</td>
-                            <td>{{ $disciplina->curso->nome ?? 'N/A' }}</td>
+                            <td><i class="fas fa-graduation-cap text-primary mr-2"></i>Classe</td>
+                            <td>{{ $disciplina->classe->nome ?? 'N/A' }}</td>
                         </tr>
                         <tr>
                             <td><i class="fas fa-layer-group text-info mr-2"></i>Nível</td>

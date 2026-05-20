@@ -22,10 +22,7 @@ class CheckRole
 
         // Verifica se o usuário tem o tipo necessário
         if ($request->user()->tipo !== $tipo) {
-            abort(403, 'Acesso não autorizado.'); // Retorna um erro 403
-            // retorna para a pagina de login
-            // return response()->json(['error' => 'Acesso não autorizado.'], Response::HTTP_FORBIDDEN);
-            return redirect()->route('logout'); // Redireciona para a página de login
+            abort(403, 'Acesso não autorizado. O seu perfil não tem permissão para aceder a esta área.');
         }
 
         return $next($request);

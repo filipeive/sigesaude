@@ -5,15 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-// app/Models/Disciplina.php
+/**
+ * Disciplina pertence a uma Classe (nível escolar).
+ * Todos os alunos de turmas dessa classe estudam estas disciplinas.
+ */
 class Disciplina extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'nome',
+        'carga_horaria',
         'docente_id',
-        'curso_id',
+        'classe_id',
         'nivel_id'
     ];
 
@@ -22,9 +26,12 @@ class Disciplina extends Model
         return $this->belongsTo(Docente::class);
     }
 
-    public function curso()
+    /**
+     * Classe a que esta disciplina pertence (ex: 10ª Classe)
+     */
+    public function classe()
     {
-        return $this->belongsTo(Curso::class);
+        return $this->belongsTo(Classe::class);
     }
 
     public function nivel()
@@ -32,35 +39,28 @@ class Disciplina extends Model
         return $this->belongsTo(Nivel::class);
     }
 
-    public function matriculas()
-    {
-        return $this->hasMany(Matricula::class);
-    }
-    public function inscricoes()
-    {
-        return $this->hasMany(Inscricao::class);
-    }
     public function notasFrequencia()
     {
         return $this->hasMany(NotaFrequencia::class);
     }
+
     public function notasExame()
     {
         return $this->hasMany(NotaExame::class);
     }
-    public function anoLectivo()
-    {
-        return $this->belongsTo(AnoLectivo::class);
-    }
-    //notas detalhadas
+
     public function notasDetalhadas()
     {
         return $this->hasMany(NotaDetalhada::class);
     }
-    //inscricoes disciplinas
-    public function inscricaoDisciplinas()
+
+    public function anoLectivo()
     {
-        return $this->hasMany(InscricaoDisciplina::class);
+        return $this->belongsTo(AnoLectivo::class);
     }
-   
+    //relacao com turma
+    public function turma()
+    {
+        return $this->belongsTo(Turma::class);
+    }
 }

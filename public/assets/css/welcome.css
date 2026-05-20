@@ -1,27 +1,18 @@
 :root {
-    --primary: #1e88e5;
-    /* Azul médio - cor principal */
-    --primary-dark: #1565c0;
+    --primary: #1565c0;
+    /* Azul escola - cor principal */
+    --primary-dark: #0d47a1;
     /* Azul escuro */
-    --secondary: #00acc1;
-    /* Azul-turquesa - hospitais */
-    --accent: #43a047;
-    /* Verde médico */
-    --accent-light: #c3f1c5;
-    /* Verde claro */
-    --red-health: #e53935;
-    /* Vermelho médico */
-    --purple-health: #8e24aa;
-    /* Roxo farmacêutico */
-    --light: #f8fafc;
-    --light-bg: #e3f2fd;
-    /* Fundo azul claro */
-    --light-accent-bg: #e8f5e9;
-    /* Fundo verde claro */
+    --secondary: #00897b;
+    /* Verde petróleo - ensino */
+    --accent: #f57f17;
+    /* Amarelo-ouro - destaque */
+    --accent-light: #fff8e1;
+    /* Amarelo claro */
     --dark: #263238;
-    --success: #4caf50;
-    --warning: #ff9800;
-    --danger: #f44336;
+    --success: #2e7d32;
+    --warning: #e65100;
+    --danger: #c62828;
     --text-primary: #37474f;
     --text-secondary: #546e7a;
     --border-color: #bbdefb;
@@ -35,7 +26,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light-accent-bg);
+    background-color: #e3f2fd;
     color: var(--text-primary);
     line-height: 1.6;
 }
@@ -235,8 +226,7 @@ nav a:hover {
 .feature-icon {
     width: 70px;
     height: 70px;
-    background-color: var(--light-bg);
-    border-radius: 50%;
+    background-color: #e3f2fd;    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -251,7 +241,7 @@ nav a:hover {
 }
 
 .feature-card:nth-child(3) .feature-icon {
-    background-color: var(--light-accent-bg);
+    background-color: #e3f2fd;
     color: var(--accent);
 }
 
@@ -640,5 +630,20 @@ footer {
 
     .mobile-menu-btn {
         display: block;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
     }
 }

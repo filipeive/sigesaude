@@ -104,7 +104,7 @@
                         <thead>
                             <tr>
                                 <th>Disciplina</th>
-                                <th>Curso</th>
+                                <th>Classe</th>
                                 <th>Estudantes</th>
                                 <th class="text-center">Progresso</th>
                                 <th>Ações</th>
@@ -116,19 +116,19 @@
                                 <td>
                                     <strong>{{ $disciplina->nome }}</strong>
                                 </td>
-                                <td>{{ $disciplina->curso->nome ?? 'N/A' }}</td>
+                                <td>{{ $disciplina->classe->nome ?? 'N/A' }}</td>
                                 <td>{{ $estudantesPorDisciplina[$disciplina->id] ?? 0 }}</td>
                                 <td class="text-center">
-                                    @php
-                                        // Calcular progresso (exemplo)
-                                        $progresso = rand(0, 100); // Substitua por lógica real
-                                    @endphp
-                                    <div class="progress progress-xs">
-                                        <div class="progress-bar bg-success" style="width: {{ $progresso }}%"></div>
-                                    </div>
-                                    <span class="badge bg-{{ $progresso < 30 ? 'danger' : ($progresso < 70 ? 'warning' : 'success') }}">
-                                        {{ $progresso }}%
-                                    </span>
+                                @php
+                                    // Calcular progresso (exemplo)
+                                    $progresso = 75; // Valor estático para demo
+                                @endphp
+                                <div class="progress progress-xs">
+                                    <div class="progress-bar bg-success" style="width: {{ $progresso }}%"></div>
+                                </div>
+                                <span class="badge bg-{{ $progresso < 30 ? 'danger' : ($progresso < 70 ? 'warning' : 'success') }}">
+                                    {{ $progresso }}%
+                                </span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -182,7 +182,7 @@
                                     <span class="badge badge-warning float-right">Urgente</span>
                                 </a>
                                 <span class="product-description">
-                                    Prazo final para entrega das notas de frequência: 15/12/2023
+                                    Prazo final para entrega das notas de frequência: 15/06/2026
                                 </span>
                             </div>
                         </li>
@@ -193,7 +193,7 @@
                                     <span class="badge badge-info float-right">Info</span>
                                 </a>
                                 <span class="product-description">
-                                    Próxima reunião: 10/12/2023 às 14:00
+                                    Próxima reunião: 10/06/2026 às 14:00
                                 </span>
                             </div>
                         </li>
@@ -369,19 +369,19 @@ $(function () {
         events: [
             {
                 title: 'Entrega de Notas',
-                start: '2023-12-15',
+                start: '2026-06-15',
                 backgroundColor: '#f56954',
                 borderColor: '#f56954'
             },
             {
                 title: 'Reunião Docentes',
-                start: '2023-12-10',
+                start: '2026-06-10',
                 backgroundColor: '#00a65a',
                 borderColor: '#00a65a'
             },
             {
                 title: 'Início Exames',
-                start: '2023-12-20',
+                start: '2026-06-20',
                 backgroundColor: '#f39c12',
                 borderColor: '#f39c12'
             }

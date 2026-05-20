@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'SIGE-IS',
+    'title' => 'Escola dos Visionários',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>SIGE</b> - IS',
+    'logo' => '<b>Escola</b> - Visionários',
     'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -342,9 +342,27 @@ return [
             'can' => 'isAdmin',
         ],
         [
-            'text' => 'Cursos',
-            'url' => 'admin/cursos',
-            'icon' => 'fas fa-fw fa-university',
+            'text' => 'Classes',
+            'url' => 'admin/classes',
+            'icon' => 'fas fa-fw fa-school',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Pré-Inscrições',
+            'url' => 'admin/pre-inscricoes',
+            'icon' => 'fas fa-fw fa-user-plus',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Turmas',
+            'url' => 'admin/turmas',
+            'icon' => 'fas fa-fw fa-chalkboard',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Anos Lectivos',
+            'url' => 'admin/anos-lectivos',
+            'icon' => 'fas fa-fw fa-calendar-alt',
             'can' => 'isAdmin',
         ],
         [
@@ -357,12 +375,6 @@ return [
             'text' => 'Matrículas',
             'url' => 'admin/matriculas',
             'icon' => 'fas fa-fw fa-graduation-cap',
-            'can' => 'isAdmin',
-        ],
-        [
-            'text' => 'Inscrições',
-            'url' => 'admin/incricoes',
-            'icon' => 'fas fa-fw fa-pencil-alt',
             'can' => 'isAdmin',
         ],
         [
@@ -425,61 +437,44 @@ return [
                     'icon' => 'fas fa-fw fa-tachometer-alt',
                 ],
                 [
+                    'text' => 'Minha Matrícula',
+                    'url' => 'estudante/matriculas',
+                    'icon' => 'fas fa-fw fa-file-invoice',
+                ],
+                [
+                    'text' => 'Propinas Mensais',
+                    'url' => 'estudante/pagamentos',
+                    'icon' => 'fas fa-fw fa-wallet',
+                ],
+                [
                     'text' => 'Notas de Frequência',
                     'url' => 'estudante/notas/frequencia',
-                    'icon' => 'fas fa-fw fa-graduation-cap',
+                    'icon' => 'fas fa-fw fa-chart-line',
                 ],
                 [
-                    'text' => 'Exames',
+                    'text' => 'Exames Finais',
                     'url' => '/estudante/notas/exame',
-                    'icon' => 'fas fa-fw fa-book-open',
+                    'icon' => 'fas fa-fw fa-file-signature',
                 ],
                 [
-                    'text' => 'Situação Financeira',
-                    'url' => 'estudante/pagamentos',
-                    'icon' => 'fas fa-fw fa-dollar-sign',
+                    'text' => 'Relatórios',
+                    'url' => 'estudante/relatorios',
+                    'icon' => 'fas fa-fw fa-chart-pie',
                 ],
                 [
-                    'text' => 'Inscrições',
-                    'url' => 'estudante/inscricoes',
-                    'icon' => 'fas fa-fw fa-pencil-alt',
-                ],
-                [
-                    'text' => 'Horários',
-                    'url' => '#',
-                    'icon' => 'fas fa-fw fa-calendar-alt',
-                ],
-                [
-                    'text' => 'Material Acadêmico',
-                    'url' => '#',
-                    'icon' => 'fas fa-fw fa-file-alt',
-                ],
-                [
-                    'text' => 'Visualizar Dados do Estudante',
-                    'url' => 'estudante/perfil',
-                    'icon' => 'fas fa-fw fa-id-card',
-                ],
-                [
-                    'text' => 'Ver Plano Curricular',
-                    'url' => '#',
-                    'icon' => 'fas fa-fw fa-book-reader',
-                ],
-            ],
-        ],
-        [
-            'text' => 'Personalizações',
-            'icon' => 'fas fa-fw fa-cog',
-            'can' => 'isEstudante',
-            'submenu' => [
-                [
-                    'text' => 'Atualizar meu Perfil',
-                    'url' => 'estudante/perfil',
-                    'icon' => 'fas fa-fw fa-user-edit',
+                    'text' => 'Notificações',
+                    'url' => 'estudante/notificacoes',
+                    'icon' => 'fas fa-fw fa-bell',
                 ],
                 [
                     'text' => 'Configurações',
                     'url' => 'estudante/configuracoes',
-                    'icon' => 'fas fa-fw fa-cogs',
+                    'icon' => 'fas fa-fw fa-cog',
+                ],
+                [
+                    'text' => 'Perfil',
+                    'url' => 'estudante/perfil',
+                    'icon' => 'fas fa-fw fa-user',
                 ],
             ],
         ],

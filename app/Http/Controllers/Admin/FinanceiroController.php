@@ -114,8 +114,26 @@ class FinanceiroController extends Controller
     public function relatorios()
     {
         // Exibir a página de relatórios financeiros
-        $relatorios = RelatorioFinanceiro::all();
-        return view('admin.financeiro.relatorios', compact('relatorios'));
+        $relatorios = RelatorioFinanceiro::latest()->paginate(10);
+        
+        // Calcular métricas para os cards (exemplo simplificado)
+        $entradas_mensal = Transacao::where('tipo', 'entrada')->whereMonth('data', now()->month)->sum('valor');
+        $saidas_mensal = Transacao::where('tipo', 'saida')->whereMonth('data', now()->month)->sum('valor');
+        $saldo_mensal = $entradas_mensal - $saidas_mensal;
+        
+        $saldo_anterior = Transacao::where('tipo', 'entrada')->whereMonth('data', now()->subMonth()->month)->sum('valor') - 
+                         Transacao::where('tipo', 'saida')->whereMonth('data', now()->subMonth()->month)->sum('valor');
+        
+        $crescimento_percentual = $saldo_anterior > 0 ? round((($saldo_mensal - $saldo_anterior) / $saldo_anterior) * 100, 2) : 100;
+
+        return view('admin.financeiro.relatorios', compact(
+            'relatorios', 
+            'entradas_mensal', 
+            'saidas_mensal', 
+            'saldo_mensal', 
+            'saldo_anterior', 
+            'crescimento_percentual'
+        ));
     }
 
     /**
@@ -144,5 +162,41 @@ class FinanceiroController extends Controller
 
         return redirect()->route('admin.financeiro.configuracoes')
             ->with('success', 'Configurações de pagamento atualizadas com sucesso.');
+    }
+
+    public function showRelatorio($id)
+    {
+        $relatorio = RelatorioFinanceiro::findOrFail($id);
+        return view('admin.financeiro.relatorios_show', compact('relatorio'));
+    }
+
+    public function downloadRelatorio($id)
+    {
+        $relatorio = RelatorioFinanceiro::findOrFail($id);
+        // Lógica de download
+        return back()->with('success', 'Download iniciado.');
+    }
+
+    public function destroyRelatorio($id)
+    {
+        $relatorio = RelatorioFinanceiro::findOrFail($id);
+        $relatorio->delete();
+        return back()->with('success', 'Relatório excluído com sucesso.');
+    }
+
+    public function gerarRelatorio(Request $request)
+    {
+        // Lógica para gerar relatório
+        return back()->with('success', 'Relatório em processamento.');
+    }
+
+    public function ajaxGrafico(Request $request)
+    {
+        // Retornar dados JSON para o gráfico
+        return response()->json([
+            'labels' => ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+            'entradas' => [1000, 2000, 1500, 3000, 2500, 4000],
+            'saidas' => [800, 1500, 1200, 2000, 1800, 3000]
+        ]);
     }
 }

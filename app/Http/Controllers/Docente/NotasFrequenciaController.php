@@ -30,25 +30,23 @@ class NotasFrequenciaController extends Controller
             return redirect()->route('home')->with('error', 'Perfil de docente não encontrado.');
         }
         
-        // Obter disciplinas com contagem de estudantes
+        // Obter disciplinas com contagem de estudantes baseada na Classe/Turma
         $disciplinas = Disciplina::where('docente_id', $docente->id)
-            ->withCount(['inscricaoDisciplinas as estudantes_count' => function ($query) {
-                // Filtrar por ano letivo ativo
-                $anoLectivoAtual = AnoLectivo::where('status', 'Ativo')->first();
-                if ($anoLectivoAtual) {
-                    $query->whereHas('inscricao', function ($q) use ($anoLectivoAtual) {
-                        $q->where('ano_lectivo_id', $anoLectivoAtual->id);
-                    });
-                }
-            }])
-            ->with(['curso', 'nivel'])
+            ->with(['classe', 'nivel'])
             ->get();
+
+        foreach ($disciplinas as $disciplina) {
+            // Conta estudantes matriculados em turmas da classe desta disciplina
+            $disciplina->estudantes_count = Estudante::whereHas('turma', function($query) use ($disciplina) {
+                $query->where('classe_id', $disciplina->classe_id);
+            })->where('status', 'Ativo')->count();
+        }
         
         // Obter dados para filtros
-        $cursos = \App\Models\Curso::all();
+        $classes = \App\Models\Classe::all();
         $niveis = \App\Models\Nivel::all();
         
-        return view('docente.notas_frequencia.index', compact('disciplinas', 'cursos', 'niveis'));
+        return view('docente.notas_frequencia.index', compact('disciplinas', 'classes', 'niveis'));
     }
     
     public function show($disciplinaId)
@@ -87,23 +85,16 @@ class NotasFrequenciaController extends Controller
     }
     private function getEstudantesComNotas($disciplina, $anoLectivoAtual)
     {
-        // Primeiro, buscar todos os estudantes inscritos na disciplina para o ano letivo atual
-        $inscricoes = InscricaoDisciplina::where('disciplina_id', $disciplina->id)
-            ->whereHas('inscricao', function ($query) use ($anoLectivoAtual) {
-                $query->where('ano_lectivo_id', $anoLectivoAtual->id);
+        // Buscar todos os estudantes matriculados em turmas que pertencem à classe desta disciplina
+        $estudantes_lista = Estudante::whereHas('turma', function($query) use ($disciplina) {
+                $query->where('classe_id', $disciplina->classe_id);
             })
-            ->with(['inscricao.estudante.user', 'inscricao.estudante.matriculas'])
+            ->with(['user', 'turma'])
             ->get();
         
         $estudantes = [];
         
-        foreach ($inscricoes as $inscricao) {
-            if (!$inscricao->inscricao || !$inscricao->inscricao->estudante) {
-                continue;
-            }
-            
-            $estudante = $inscricao->inscricao->estudante;
-            
+        foreach ($estudantes_lista as $estudante) {
             // Buscar notas de frequência do estudante para esta disciplina
             $notaFrequencia = NotaFrequencia::with('notasDetalhadas')
                 ->where('estudante_id', $estudante->id)
@@ -128,7 +119,8 @@ class NotasFrequenciaController extends Controller
                 'estudante' => (object)[
                     'id' => $estudante->id,
                     'user' => $estudante->user,
-                    'matricula' => $estudante->matriculas->first() ? $estudante->matriculas->first()->matricula : 'N/A'
+                    'matricula' => $estudante->matricula,
+                    'turma_nome' => $estudante->turma->nome ?? 'N/A'
                 ],
                 'notas_frequencia' => $notaFrequencia,
                 'notas_detalhadas' => $notasDetalhadas

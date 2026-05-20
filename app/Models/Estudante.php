@@ -13,7 +13,7 @@ class Estudante extends Model
     protected $fillable = [
         'user_id',
         'matricula',
-        'curso_id',
+        'turma_id',
         'ano_lectivo_id',
         'data_nascimento',
         'genero',
@@ -28,9 +28,9 @@ class Estudante extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function curso()
+    public function turma()
     {
-        return $this->belongsTo(Curso::class);
+        return $this->belongsTo(Turma::class);
     }
 
     public function anoLectivo()
@@ -38,7 +38,7 @@ class Estudante extends Model
         return $this->belongsTo(AnoLectivo::class);
     }
 
-    public function matriculas()
+public function matriculas()
     {
         return $this->hasMany(Matricula::class);
     }
@@ -47,26 +47,7 @@ class Estudante extends Model
     {
         return $this->hasMany(Pagamento::class);
     }
-    // app/Models/Estudante.php
-    public function nivel()
-    {
-        return $this->belongsTo(Nivel::class, 'nivel_id');
-    }
-
-   // app/Models/Estudante.php
-    public function getNivelAttribute()
-    {
-        // Determinar o nível com base no ano de ingresso e no ano atual
-        $anoIngresso = $this->ano_ingresso;
-        $anoAtual = date('Y');
-        $diferencaAnos = $anoAtual - $anoIngresso;
-        
-        // Assumindo que o nível 1 corresponde ao primeiro ano, etc.
-        $nivelId = min($diferencaAnos + 1, 5); // Limitar ao nível 5
-        
-        return Nivel::find($nivelId);
-    }
-    public function notasFrequencia()
+public function notasFrequencia()
     {
         return $this->hasMany(NotaFrequencia::class);
     }
@@ -79,19 +60,8 @@ class Estudante extends Model
         return $this->hasMany(NotaDetalhada::class);
     }
 
-    /**
-     * Obter as médias finais do estudante.
-     */
     public function mediaFinais()
     {
         return $this->hasMany(MediaFinal::class);
-    }
-    public function inscricaoDisciplinas()
-    {
-        return $this->hasMany(InscricaoDisciplina::class);
-    }
-    public function inscricoes()
-    {
-        return $this->hasMany(Inscricao::class);
     }
 }

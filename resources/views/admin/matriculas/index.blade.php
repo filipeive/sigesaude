@@ -14,7 +14,6 @@
 @section('content')
     <div class="row">
         <div class="col-12">
-            <!-- Card de estatísticas rápidas -->
             <div class="row mb-4">
                 <div class="col-md-4">
                     <div class="small-box bg-info">
@@ -41,17 +40,29 @@
                 <div class="col-md-4">
                     <div class="small-box bg-warning">
                         <div class="inner">
-                            <h3>{{ $matriculas->pluck('disciplina_id')->unique()->count() }}</h3>
-                            <p>Disciplinas com Matrículas</p>
+                            <h3>{{ $matriculas->pluck('turma_id')->unique()->count() }}</h3>
+                            <p>Turmas com Matrículas</p>
                         </div>
                         <div class="icon">
-                            <i class="fas fa-book"></i>
+                            <i class="fas fa-users-class"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Card principal -->
+            <!-- Instrucoes de Pagamento para Matricula -->
+            <div class="alert alert-info" style="margin-bottom: 20px;">
+                <h5><i class="fas fa-info-circle mr-2"></i> Instrucoes de Pagamento da Matricula</h5>
+                <p class="mb-1">O valor da matrícula anual é cobrado uma unica vez e gera uma <strong>referencia ATM propria</strong> (prefixo <strong>922</strong>).</p>
+                <p class="mb-0">
+                    Para efectuar o pagamento, o estudante ou encarregado deve dirigir-se a qualquer ATM dos
+                    <strong>Bancos Parceiros</strong> (BCI, Ponto24), escolher 
+                    <strong>Pagamentos &gt; Pagamento de Servicos</strong>, inserir a 
+                    <strong>Entidade: 11151</strong> e a <strong>Referencia</strong> da matrícula.
+                    Apos o pagamento, envie o <strong>comprovativo</strong> pela plataforma para confirmacao.
+                </p>
+            </div>
+
             <div class="card card-outline card-primary">
                 <div class="card-header">
                     <h3 class="card-title">Lista de Matrículas</h3>
@@ -83,46 +94,50 @@
                                 <thead class="thead-light">
                                     <tr>
                                         <th><i class="fas fa-user mr-1"></i> Estudante</th>
-                                        <th><i class="fas fa-book mr-1"></i> Disciplinas</th>
-                                        <th><i class="fas fa-calendar-alt mr-1"></i> Data</th>
+                                        <th><i class="fas fa-users mr-1"></i> Turma</th>
+                                        <th><i class="fas fa-calendar-alt mr-1"></i> Ano Letivo</th>
+                                        <th><i class="fas fa-money-bill mr-1"></i> Valor</th>
                                         <th><i class="fas fa-clipboard-check mr-1"></i> Status</th>
                                         <th class="text-center"><i class="fas fa-cogs mr-1"></i> Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($matriculas->groupBy('estudante_id') as $estudanteId => $matriculasEstudante)
+                                    @foreach($matriculas as $matricula)
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
                                                     <div class="mr-2">
                                                         <img class="profile-user-img img-fluid img-circle" 
-                                                            src="{{ $matriculasEstudante->first()->estudante->user->avatar ?? 'https://via.placeholder.com/40' }}" 
+                                                            src="{{ $matricula->estudante?->user?->foto_perfil ? Storage::url($matricula->estudante->user->foto_perfil) : asset('vendor/adminlte/dist/img/user.jpg') }}" 
                                                             alt="Foto" style="width: 40px; height: 40px;">
                                                     </div>
                                                     <div>
-                                                        <strong>{{ $matriculasEstudante->first()->estudante->user->name }}</strong>
-                                                        <p class="text-muted mb-0">{{ $matriculasEstudante->first()->estudante->numero }}</p>
+                                                        <strong>{{ $matricula->estudante?->user?->name ?? 'N/A' }}</strong>
+                                                        <p class="text-muted mb-0">{{ $matricula->estudante?->matricula ?? 'N/A' }}</p>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                @foreach($matriculasEstudante as $matricula)
-                                                    <p><strong>{{ $matricula->disciplina->nome }}</strong> ({{ $matricula->disciplina->codigo ?? 'Sem código' }})</p>
-                                                @endforeach
+                                                <strong>{{ $matricula->turma?->nome ?? 'N/A' }}</strong>
+                                                <p class="text-muted mb-0">{{ $matricula->turma?->ano_serie ?? 'N/A' }}º Ano</p>
                                             </td>
-                                            <td>{{ isset($matriculasEstudante->first()->created_at) ? \Carbon\Carbon::parse($matriculasEstudante->first()->created_at)->format('d/m/Y') : '---' }}</td>
+                                            <td>{{ $matricula->anoLectivo->ano ?? 'N/A' }}</td>
+                                            <td>{{ $matricula->valor ? number_format($matricula->valor, 2, ',', '.') . ' MZN' : 'N/A' }}</td>
                                             <td>
-                                                <span class="badge badge-success">Ativa</span>
+                                                <span class="badge badge-success">{{ $matricula->status ?? 'Ativa' }}</span>
                                             </td>
                                             <td class="text-center">
                                                 <div class="btn-group">
-                                                    <a href="{{ route('admin.matriculas.show', $matriculasEstudante->first()->id) }}" class="btn btn-info btn-sm" title="Ver detalhes">
+                                                    <a href="{{ route('admin.matriculas.show', $matricula->id) }}" class="btn btn-info btn-sm" title="Ver detalhes">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('admin.matriculas.edit', $matriculasEstudante->first()->id) }}" class="btn btn-warning btn-sm" title="Editar">
+                                                    <a href="{{ route('admin.matriculas.pdf', $matricula->id) }}" class="btn btn-primary btn-sm" title="Baixar Guia PDF">
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </a>
+                                                    <a href="{{ route('admin.matriculas.edit', $matricula->id) }}" class="btn btn-warning btn-sm" title="Editar">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form action="{{ route('admin.matriculas.destroy', $matriculasEstudante->first()->id) }}" method="POST" class="d-inline">
+                                                    <form action="{{ route('admin.matriculas.destroy', $matricula->id) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger btn-sm delete-btn" title="Excluir matrícula">
@@ -137,7 +152,6 @@
                             </table>
                         </div>
                         
-                        <!-- Paginação -->
                         <div class="mt-4">
                             {{ $matriculas->links('pagination::bootstrap-5') }}
                         </div>
@@ -150,7 +164,6 @@
 
 @section('css')
     <style>
-        /* Estilização geral */
         .small-box {
             border-radius: 0.5rem;
             box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
@@ -186,41 +199,9 @@
             padding: 0;
         }
         
-        .small-box p {
-            font-size: 1rem;
-            margin-bottom: 0;
-        }
-        
-        /* Estilos da tabela */
         .table thead th {
             border-bottom-width: 1px;
             font-weight: 600;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.04);
-        }
-        
-        /* Imagens e badges */
-        .img-circle {
-            border-radius: 50% !important;
-            object-fit: cover;
-        }
-        
-        .badge {
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-            border-radius: 0.25rem;
-        }
-        
-        /* Botões e ações */
-        .btn-group > .btn {
-            margin-right: 2px;
-        }
-        
-        /* Card outline */
-        .card-outline {
-            border-top: 3px solid;
         }
     </style>
 @stop
@@ -228,17 +209,6 @@
 @section('js')
     <script>
         $(document).ready(function() {
-            console.log('Página de matrículas carregada.');
-            
-            // Pesquisa de matrículas
-            $("#searchInput").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $("#matriculasTable tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
-            
-            // Confirmação personalizada para excluir matrícula
             $('.delete-btn').on('click', function(e) {
                 e.preventDefault();
                 var form = $(this).closest('form');

@@ -1,4 +1,3 @@
-{{-- resources/views/admin/estudantes/index.blade.php --}}
 @extends('adminlte::page')
 
 @section('title', 'Gestão de Estudantes')
@@ -22,11 +21,10 @@
     <div class="row">
         <div class="col-12">
             <div class="card card-outline card-primary">
-                <h3 class="card-title" style="padding-left:15px; padding-top:15px ">
+                <h3 class="card-title" style="padding-left:15px; padding-top:15px">
                     <i class="fas fa-users mr-2"></i> Lista de Estudantes
                 </h3>
                 <div class="card-body">
-                    {{-- Filtros --}}
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <form action="{{ route('admin.estudantes.index') }}" method="GET" class="form-inline">
@@ -35,9 +33,9 @@
                                         placeholder="Buscar por nome ou matrícula...">
                                 </div>
                                 <div class="input-group mb-2 mr-sm-2">
-                                    <select name="curso" class="form-control">
-                                        <option value="">Todos os Cursos</option>
-                                        @foreach ($cursos as $id => $nome)
+                                    <select name="turma" class="form-control">
+                                        <option value="">Todas as Turmas</option>
+                                        @foreach ($turmas as $id => $nome)
                                             <option value="{{ $id }}">{{ $nome }}</option>
                                         @endforeach
                                     </select>
@@ -58,14 +56,13 @@
                         </div>
                     </div>
 
-                    {{-- Tabela --}}
                     <div class="table-responsive">
                         <table class="table table-hover table-striped">
                             <thead>
                                 <tr>
                                     <th>Estudante</th>
                                     <th>Matrícula</th>
-                                    <th>Curso</th>
+                                    <th>Turma</th>
                                     <th>Status</th>
                                     <th>Ações</th>
                                 </tr>
@@ -91,7 +88,7 @@
                                             </div>
                                         </td>
                                         <td>{{ $estudante->matricula }}</td>
-                                        <td>{{ $estudante->curso->nome }}</td>
+                                        <td>{{ $estudante->turma->nome ?? 'N/A' }}</td>
                                         <td>
                                             @php
                                                 $statusClasses = [
@@ -101,8 +98,7 @@
                                                     'Desistente' => 'badge badge-warning',
                                                 ];
                                             @endphp
-                                            <span
-                                                class="{{ $statusClasses[$estudante->status] ?? 'badge badge-secondary' }}">
+                                            <span class="{{ $statusClasses[$estudante->status] ?? 'badge badge-secondary' }}">
                                                 {{ $estudante->status }}
                                             </span>
                                         </td>
@@ -132,7 +128,6 @@
                         </table>
                     </div>
 
-                    {{-- Paginação --}}
                     <div class="mt-3">
                         {{ $estudantes->links() }}
                     </div>
@@ -141,7 +136,6 @@
         </div>
     </div>
 
-    {{-- Modal de Confirmação de Exclusão --}}
     <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -180,10 +174,8 @@
         }
 
         $(document).ready(function() {
-            // Inicializa os selects com Select2
             $('.select2').select2();
 
-            // Toast para mensagens de sucesso/erro
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
@@ -191,7 +183,6 @@
                 timer: 3000
             });
 
-            // Mostra mensagem de sucesso se existir
             @if (session('success'))
                 Toast.fire({
                     icon: 'success',
@@ -199,7 +190,6 @@
                 });
             @endif
 
-            // Mostra mensagem de erro se existir
             @if (session('error'))
                 Toast.fire({
                     icon: 'error',

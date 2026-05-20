@@ -15,160 +15,24 @@
                     <li class="breadcrumb-item"><a href="{{-- route('estudante.home') --}}">Home</a></li>
                     <li class="breadcrumb-item active">Pagamentos</li>
                 </ol>
-            </div>
-        </div>
-    </div>
-@stop
-
-@section('content')
-    <div class="container-fluid">
-        <!-- Notificações -->
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                <h5><i class="icon fas fa-check mr-1"></i> Sucesso!</h5>
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                <h5><i class="icon fas fa-ban mr-1"></i> Erro!</h5>
-                {{ session('error') }}
-            </div>
-        @endif
-
-        <!-- Cards de Resumo Financeiro -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="info-box bg-danger">
-                    <span class="info-box-icon"><i class="fas fa-exclamation-circle"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Dívida Atual</span>
-                        <span class="info-box-number">{{ number_format($totalPendente, 2, ',', '.') }} MZN</span>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ $totalPendente > 0 ? 100 : 0 }}%"></div>
-                        </div>
-                        <span class="progress-description">
-                            @if ($totalPendente > 0)
-                                <i class="fas fa-clock mr-1"></i> Pagamento pendente
-                            @else
-                                <i class="fas fa-check-circle mr-1"></i> Tudo em dia
-                            @endif
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-box bg-success">
-                    <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Total Pago</span>
-                        <span class="info-box-number">{{ number_format($totalPago, 2, ',', '.') }} MZN</span>
-                        <div class="progress">
-                            <div class="progress-bar" style="width: {{ $totalPago > 0 ? 100 : 0 }}%"></div>
-                        </div>
-                        <span class="progress-description">
-                            Desde {{ date('Y') }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-box bg-warning">
-                    <span class="info-box-icon"><i class="fas fa-calendar-alt"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Próximo Vencimento</span>
-                        <span class="info-box-number">
-                            @if ($proximoVencimento)
-                                {{-- use carbon para a data do proximo pagamento --}}
-                                {{ \Carbon\Carbon::parse($proximoVencimento->data_vencimento)->format('d/m/Y') }}
-                            @else
-                                Nenhum vencimento próximo
-                            @endif
-                        </span>
-                        @if ($proximoVencimento)
-                            <div class="progress">
-                                @php
-                                    $diasRestantes = max(
-                                        0,
-                                        \Carbon\Carbon::now()->diffInDays($proximoVencimento->data_vencimento, false),
-                                    );
-                                    $percentual = min(100, max(0, ($diasRestantes / 30) * 100));
-                                @endphp
-                                <div class="progress-bar" style="width: {{ $percentual }}%"></div>
-                            </div>
-                            <span class="progress-description">
-                                @if ($diasRestantes <= 0)
-                                    <i class="fas fa-exclamation-triangle mr-1"></i> Vencido
-                                @elseif ($diasRestantes <= 5)
-                                    <i class="fas fa-clock mr-1"></i> Vence em {{ $diasRestantes }} dias
-                                @else
-                                    <i class="fas fa-calendar-check mr-1"></i> {{ $diasRestantes }} dias restantes
-                                @endif
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Filtros e Abas -->
-        <div class="card">
-            <div class="card-header p-0 border-bottom-0">
-                <ul class="nav nav-tabs" id="custom-tabs-three-tab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="propinas-tab" data-toggle="pill" href="#propinas" role="tab">
-                            <i class="fas fa-money-bill-wave mr-2"></i> Propinas
-                            @if ($propinas->where('status', 'pendente')->count() > 0)
-                                <span
-                                    class="badge badge-danger ml-1">{{ $propinas->where('status', 'pendente')->count() }}</span>
-                            @endif
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="historico-tab" data-toggle="pill" href="#historico" role="tab">
-                            <i class="fas fa-history mr-2"></i> Histórico
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="metodos-tab" data-toggle="pill" href="#metodos" role="tab">
-                            <i class="fas fa-credit-card mr-2"></i> Métodos de Pagamento
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content" id="custom-tabs-three-tabContent">
-                    <!-- Aba de Propinas -->
-                    <div class="tab-pane fade show active" id="propinas" role="tabpanel">
-                        <div class="row mb-4">
-                            <!-- Seletor de Ano Letivo -->
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <form method="GET" action="{{ route('estudante.pagamentos') }}"
-                                            class="form-inline">
-                                            <div class="form-group mb-2">
-                                                <label for="ano_letivo" class="mr-2">Ano Letivo:</label>
-                                                <select name="ano_letivo" id="ano_letivo" class="form-control"
-                                                    onchange="this.form.submit()">
-                                                    @foreach ($anosLetivos as $ano)
-                                                        <option value="{{ $ano->id }}"
-                                                            {{ $anoLetivo && $ano->id == $anoLetivo->id ? 'selected' : '' }}>
-                                                            {{ $ano->ano }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </form>
-                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Instruções de Pagamento -->
+                        <!-- Nota explicativa sobre tipos de pagamento -->
+                        <div class="alert alert-light border" style="margin-bottom: 15px;">
+                            <p class="mb-1 text-muted">
+                                <i class="fas fa-info-circle mr-1 text-primary"></i>
+                                <strong>Legenda de Referências:</strong> 
+                                As referências com prefixo <strong>922</strong> correspondem à <strong>Matrícula Anual</strong> (pagamento único). 
+                                As referências com prefixo <strong>831</strong> correspondem às <strong>Propinas Mensais</strong> (vencimento no dia 10 de cada mês). 
+                                <br>Todos os pagamentos utilizam a <strong>Entidade: 11151</strong>.
+                            </p>
+                        </div>
+
+                        <!-- Instruções de Pagamento -->
+                        <div class="alert alert-info">
+
                             <div class="alert alert-info">
                                 <div class="d-flex">
                                     <div class="mr-3">
@@ -294,15 +158,15 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="tipo_filter"><i class="fas fa-tag mr-1"></i> Tipo</label>
-                                        <select class="form-control select2" id="tipo_filter">
-                                            <option value="todos">Todos</option>
-                                            <option value="propina">Propina</option>
-                                            <option value="matricula">Matrícula</option>
-                                            <option value="taxa">Taxas</option>
-                                        </select>
-                                    </div>
+                                <div class="form-group">
+                                    <label for="tipo_filter"><i class="fas fa-tag mr-1"></i> Tipo</label>
+                                    <select class="form-control select2" id="tipo_filter">
+                                        <option value="todos">Todos</option>
+                                        <option value="matricula">Matrícula Anual</option>
+                                        <option value="propina">Propina Mensal</option>
+                                    </select>
+                                </div>
+
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -346,7 +210,7 @@
                                                 </td>
                                                 <td>{{ $pagamento->metodo_pagamento ?? 'Transferência Bancária' }}</td>
                                                 <td class="text-center">
-                                                    <a href="#" class="btn btn-sm btn-outline-success">
+                                                    <a href="{{ route('estudante.pagamentos.recibo', $pagamento->id) }}" class="btn btn-sm btn-outline-success">
                                                         <i class="fas fa-file-download mr-1"></i> Baixar
                                                     </a>
                                                 </td>
@@ -911,7 +775,7 @@
                                 </div>
 
                                 <div class="text-center mt-3">
-                                    <a href="#" class="btn btn-primary mb-2">
+                                    <a href="{{ route('estudante.pagamentos.recibo', $propina->id) }}" class="btn btn-primary mb-2">
                                         <i class="fas fa-download mr-1"></i> Baixar Recibo
                                     </a>
                                     <a href="#" class="btn btn-outline-primary mb-2">

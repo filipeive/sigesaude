@@ -134,7 +134,7 @@ class Notificacao extends Model
             'tipo' => 'financeiro',
             'icone' => 'fa-money-bill', // usa FontAwesome, ou substitui
             'cor' => 'warning',
-            'link' => route('estudante.pagamentos.show', $pagamento->id),
+            'link' => route('estudante.pagamentos', ['pagamento' => $pagamento->id]),
             'lida' => false,
             'origem_id' => $pagamento->id,
             'origem_type' => get_class($pagamento),

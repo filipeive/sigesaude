@@ -138,18 +138,18 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="curso_id"><i class="fas fa-graduation-cap mr-1"></i>Curso</label>
-                            <select class="form-control @error('curso_id') is-invalid @enderror" id="curso_id"
-                                name="curso_id">
-                                <option value="">Selecione um curso</option>
-                                @foreach ($cursos as $id => $nome)
+                            <label for="turma_id"><i class="fas fa-users-class mr-1"></i>Turma</label>
+                            <select class="form-control @error('turma_id') is-invalid @enderror" id="turma_id"
+                                name="turma_id" required>
+                                <option value="">Selecione uma turma</option>
+                                @foreach ($turmas as $id => $nome)
                                     <option value="{{ $id }}"
-                                        {{ old('curso_id', $estudante->curso_id) == $id ? 'selected' : '' }}>
+                                        {{ old('turma_id', $estudante->turma_id) == $id ? 'selected' : '' }}>
                                         {{ $nome }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('curso_id')
+                            @error('turma_id')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>

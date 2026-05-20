@@ -2,62 +2,57 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Disciplina, Curso, Docente, Nivel};
+use App\Models\{Disciplina, Classe, Docente, Nivel};
 use Illuminate\Http\Request;
 
 class DisciplinaController extends Controller
 {
-    /**
-     * Exibe a lista de disciplinas.
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $disciplinas = Disciplina::with(['curso', 'docente', 'nivel'])
+        $disciplinas = Disciplina::with(['classe', 'docente.user', 'nivel'])
             ->when($search, function ($query, $search) {
                 return $query->where('nome', 'like', "%{$search}%");
             })
+            ->when($request->input('classe_id'), function($query, $classeId) {
+                $query->where('classe_id', $classeId);
+            })
+            ->orderBy('nome')
             ->paginate(10);
 
-        return view('admin.disciplinas.index', compact('disciplinas'));
+        $classes = Classe::orderBy('nivel')->pluck('nome', 'id');
+
+        return view('admin.disciplinas.index', compact('disciplinas', 'classes'));
     }
 
-    /**
-     * Exibe o formulário de criação de disciplina.
-     */
     public function create()
     {
-        $cursos = Curso::all();
-        $docentes = Docente::all();
+        $classes = Classe::orderBy('nivel')->get();
+        $docentes = Docente::with('user')->get();
         $niveis = Nivel::pluck('nome', 'id');
         $disciplina = new Disciplina();
-        return view('admin.disciplinas.create', compact('cursos', 'docentes', 'niveis', 'disciplina'));
-    }    
-    
-    /**
-     * Armazena uma nova disciplina no banco de dados.
-     */
+        return view('admin.disciplinas.create', compact('classes', 'docentes', 'niveis', 'disciplina'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
             'nome' => 'required|string|max:255',
-            'curso_id' => 'required|exists:cursos,id',
+            'classe_id' => 'required|exists:classes,id',
             'docente_id' => 'required|exists:docentes,id',
             'nivel_id' => 'required|exists:niveis,id',
+            'carga_horaria' => 'nullable|string|max:50',
         ]);
 
-        Disciplina::create($request->only(['nome', 'curso_id', 'docente_id', 'nivel_id']));
+        Disciplina::create($request->only(['nome', 'classe_id', 'docente_id', 'nivel_id', 'carga_horaria']));
 
         return redirect()->route('admin.disciplinas.index')
                          ->with('success', 'Disciplina criada com sucesso!');
     }
 
-    /**
-     * Exibe os detalhes de uma disciplina.
-     */
     public function show($id)
     {
-        $disciplina = Disciplina::with(['curso.docentes', 'nivel'])->find($id);
+        $disciplina = Disciplina::with(['classe', 'docente.user', 'nivel'])->find($id);
 
         if (!$disciplina) {
             return redirect()->back()->with('error', 'Disciplina não encontrada.');
@@ -66,40 +61,32 @@ class DisciplinaController extends Controller
         return view('admin.disciplinas.show', compact('disciplina'));
     }
 
-    /**
-     * Exibe o formulário de edição de disciplina.
-     */
     public function edit($id)
     {
         $disciplina = Disciplina::findOrFail($id);
-        $cursos = Curso::all();
-        $docentes = Docente::all();
-        $niveis = Nivel::all(); // Certifique-se de obter todos os objetos Nivel
-        return view('admin.disciplinas.edit', compact('disciplina', 'cursos', 'docentes', 'niveis'));
+        $classes = Classe::orderBy('nivel')->get();
+        $docentes = Docente::with('user')->get();
+        $niveis = Nivel::all();
+        return view('admin.disciplinas.edit', compact('disciplina', 'classes', 'docentes', 'niveis'));
     }
 
-    /**
-     * Atualiza uma disciplina no banco de dados.
-     */
     public function update(Request $request, $id)
     {
         $request->validate([
             'nome' => 'required|string|max:255',
-            'curso_id' => 'required|exists:cursos,id',
+            'classe_id' => 'required|exists:classes,id',
             'docente_id' => 'required|exists:docentes,id',
             'nivel_id' => 'required|exists:niveis,id',
+            'carga_horaria' => 'nullable|string|max:50',
         ]);
 
         $disciplina = Disciplina::findOrFail($id);
-        $disciplina->update($request->only(['nome', 'curso_id', 'docente_id', 'nivel_id']));
+        $disciplina->update($request->only(['nome', 'classe_id', 'docente_id', 'nivel_id', 'carga_horaria']));
 
         return redirect()->route('admin.disciplinas.index')
                          ->with('success', 'Disciplina atualizada com sucesso!');
     }
 
-    /**
-     * Remove uma disciplina do banco de dados.
-     */
     public function destroy($id)
     {
         $disciplina = Disciplina::findOrFail($id);

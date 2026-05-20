@@ -9,6 +9,7 @@ use App\Models\AnoLectivo;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class EstudantePagamentosController extends Controller
 {
@@ -219,5 +220,49 @@ class EstudantePagamentosController extends Controller
         
         return redirect()->route('estudante.pagamentos')
             ->with('success', 'Comprovante enviado com sucesso. Seu pagamento está em análise.');
+    }
+
+    /**
+     * Exibe o detailhe de um pagamento para o estudante logado.
+     */
+    public function show(Pagamento $pagamento)
+    {
+        $estudante = Estudante::where('user_id', Auth::id())->first();
+
+        if (!$estudante || $pagamento->estudante_id !== $estudante->id) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo', 'turma']);
+
+        // Instruções conforme a categoria do pagamento
+        $instrucoes = [
+            'propina'   => 'Propina mensal. Deve ser saldada até ao dia 10 de cada mês.',
+            'matricula' => 'Pagamento da matrícula anual. Dirija-se a qualquer ATM ou use Internet Banking.',
+            'taxa'      => 'Taxa adicional. utilize a referência acima para efectuar o pagamento.',
+            'inscricao' => 'Taxa de inscrição para o ano lectivo corrente.',
+        ];
+        $instrucaoTexto = $instrucoes[$pagamento->tipo] ?? 'Utilize a referência acima para efectuar o pagamento.';
+
+        return view('estudante.pagamentos_show', compact('pagamento', 'estudante', 'instrucaoTexto'));
+    }
+
+    /**
+     * Gera o recibo de pagamento em PDF para o estudante.
+     */
+    public function downloadRecibo(Pagamento $pagamento)
+    {
+        // Verificar se o pagamento pertence ao estudante logado
+        $estudante = Estudante::where('user_id', Auth::id())->first();
+        
+        if (!$estudante || $pagamento->estudante_id !== $estudante->id) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo']);
+        
+        $pdf = Pdf::loadView('pdf.recibo_pagamento', compact('pagamento'));
+        
+        return $pdf->download('Recibo_' . $pagamento->referencia . '.pdf');
     }
 }

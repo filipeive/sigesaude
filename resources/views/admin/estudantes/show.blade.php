@@ -79,7 +79,7 @@
                             </span>
                         </li>
                         <li class="list-group-item">
-                            <b>Curso</b> <span class="float-right">{{ $estudante->curso->nome }}</span>
+                            <b>Classe</b> <span class="float-right">{{ $estudante->turma?->classe?->nome ?? 'N/A' }}</span>
                         </li>
                         <li class="list-group-item">
                             <b>Turno</b> <span class="float-right">{{ $estudante->turno }}</span>
@@ -137,8 +137,8 @@
                                 <dt class="col-sm-4">Matrícula</dt>
                                 <dd class="col-sm-8">{{ $estudante->matricula }}</dd>
 
-                                <dt class="col-sm-4">Curso</dt>
-                                <dd class="col-sm-8">{{ $estudante->curso->nome }}</dd>
+                                <dt class="col-sm-4">Classe</dt>
+                                <dd class="col-sm-8">{{ $estudante->turma?->classe?->nome ?? 'N/A' }}</dd>
 
                                 <dt class="col-sm-4">Ano de Ingresso</dt>
                                 <dd class="col-sm-8">{{ $estudante->ano_ingresso }}</dd>

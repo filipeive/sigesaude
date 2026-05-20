@@ -36,21 +36,22 @@
                             </div>
 
                             <div class="form-group row mb-3">
-                                <label for="curso_id" class="col-md-4 col-form-label text-md-right">Curso</label>
+                                <label for="turma_id" class="col-md-4 col-form-label text-md-right">Classe / Turma</label>
 
                                 <div class="col-md-6">
-                                    <select id="curso_id" class="form-control @error('curso_id') is-invalid @enderror"
-                                        name="curso_id" required>
-                                        <option value="">Selecione um curso</option>
-                                        @foreach ($cursos as $curso)
-                                            <option value="{{ $curso->id }}"
-                                                {{ old('curso_id') == $curso->id ? 'selected' : '' }}>
-                                                {{ $curso->nome }}
+                                    <select id="turma_id" class="form-control @error('turma_id') is-invalid @enderror"
+                                        name="turma_id" required>
+                                        <option value="">Selecione uma turma</option>
+                                        @php $turmas = \App\Models\Turma::all(); @endphp
+                                        @foreach ($turmas as $turma)
+                                            <option value="{{ $turma->id }}"
+                                                {{ old('turma_id') == $turma->id ? 'selected' : '' }}>
+                                                {{ $turma->nome }} ({{ $turma->ano_serie }}º Ano)
                                             </option>
                                         @endforeach
                                     </select>
 
-                                    @error('curso_id')
+                                    @error('turma_id')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>

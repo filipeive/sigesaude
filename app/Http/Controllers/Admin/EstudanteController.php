@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Estudante, User, Curso, AnoLectivo};
+use App\Models\{Estudante, User, Turma, AnoLectivo};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -13,8 +13,8 @@ class EstudanteController extends Controller
 {
     public function index()
     {
-        $cursos = Curso::pluck('nome', 'id');
-        $estudantes = Estudante::with(['user', 'curso', 'anoLectivo'])
+        $turmas = Turma::pluck('nome', 'id');
+        $estudantes = Estudante::with(['user', 'turma', 'anoLectivo'])
             ->when(request('search'), function($query) {
                 $search = request('search');
                 $query->whereHas('user', function($q) use ($search) {
@@ -23,8 +23,8 @@ class EstudanteController extends Controller
                 })
                 ->orWhere('matricula', 'like', "%{$search}%");
             })
-            ->when(request('curso'), function($query) {
-                $query->where('curso_id', request('curso'));
+            ->when(request('turma'), function($query) {
+                $query->where('turma_id', request('turma'));
             })
             ->when(request('status'), function($query) {
                 $query->where('status', request('status'));
@@ -32,16 +32,16 @@ class EstudanteController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('admin.estudantes.index', compact('estudantes', 'cursos'));
+        return view('admin.estudantes.index', compact('estudantes', 'turmas'));
     }
 
     public function create()
     {
-        $cursos = Curso::pluck('nome', 'id');
+        $turmas = Turma::pluck('nome', 'id');
         $anosLectivos = AnoLectivo::where('status', 'Ativo')
             ->pluck('ano', 'id');
         
-        return view('admin.estudantes.create', compact('cursos', 'anosLectivos'));
+        return view('admin.estudantes.create', compact('turmas', 'anosLectivos'));
     }
 
     public function store(Request $request)
@@ -52,7 +52,7 @@ class EstudanteController extends Controller
             'telefone' => 'required|string|max:20',
             'password' => 'required|min:8',
             'matricula' => 'required|unique:estudantes,matricula',
-            'curso_id' => 'required|exists:cursos,id',
+            'turma_id' => 'required|exists:turmas,id',
             'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
             'data_nascimento' => 'required|date',
             'genero' => 'required|in:Masculino,Feminino,Outro',
@@ -64,7 +64,6 @@ class EstudanteController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create user
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -80,11 +79,10 @@ class EstudanteController extends Controller
                 $user->save();
             }
 
-            // Create student
             $estudante = Estudante::create([
                 'user_id' => $user->id,
                 'matricula' => $validated['matricula'],
-                'curso_id' => $validated['curso_id'],
+                'turma_id' => $validated['turma_id'],
                 'ano_lectivo_id' => $validated['ano_lectivo_id'],
                 'data_nascimento' => $validated['data_nascimento'],
                 'genero' => $validated['genero'],
@@ -109,9 +107,9 @@ class EstudanteController extends Controller
     {
         $estudante = Estudante::with([
             'user', 
-            'curso', 
+            'turma', 
             'anoLectivo',
-            'matriculas.disciplina',
+            'matriculas.turma',
             'pagamentos'
         ])->findOrFail($id);
 
@@ -121,10 +119,10 @@ class EstudanteController extends Controller
     public function edit(string $id)
     {
         $estudante = Estudante::with('user')->findOrFail($id);
-        $cursos = Curso::pluck('nome', 'id');
+        $turmas = Turma::pluck('nome', 'id');
         $anosLectivos = AnoLectivo::pluck('ano', 'id');
 
-        return view('admin.estudantes.edit', compact('estudante', 'cursos', 'anosLectivos'));
+        return view('admin.estudantes.edit', compact('estudante', 'turmas', 'anosLectivos'));
     }
 
     public function update(Request $request, string $id)
@@ -136,7 +134,7 @@ class EstudanteController extends Controller
             'email' => ['required', 'email', Rule::unique('users')->ignore($estudante->user_id)],
             'telefone' => 'required|string|max:20',
             'matricula' => ['required', Rule::unique('estudantes')->ignore($id)],
-            'curso_id' => 'required|exists:cursos,id',
+            'turma_id' => 'required|exists:turmas,id',
             'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
             'data_nascimento' => 'required|date',
             'genero' => 'required|in:Masculino,Feminino,Outro',
@@ -149,7 +147,6 @@ class EstudanteController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update user
             $estudante->user->update([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -163,10 +160,9 @@ class EstudanteController extends Controller
                 $estudante->user->save();
             }
 
-            // Update student
             $estudante->update([
                 'matricula' => $validated['matricula'],
-                'curso_id' => $validated['curso_id'],
+                'turma_id' => $validated['turma_id'],
                 'ano_lectivo_id' => $validated['ano_lectivo_id'],
                 'data_nascimento' => $validated['data_nascimento'],
                 'genero' => $validated['genero'],
@@ -194,9 +190,7 @@ class EstudanteController extends Controller
         try {
             DB::beginTransaction();
             
-            // Delete associated user
             $estudante->user->delete();
-            // The student record will be deleted automatically due to cascade
             
             DB::commit();
             return redirect()->route('admin.estudantes.index')

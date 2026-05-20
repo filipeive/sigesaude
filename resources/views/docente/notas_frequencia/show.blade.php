@@ -54,6 +54,7 @@
                             <thead>
                                 <tr>
                                     {{-- <th class="align-middle" rowspan="2">Matrícula</th> --}}
+                                    <th class="align-middle" rowspan="2">Turma</th>
                                     <th class="align-middle" rowspan="2">Nome do Estudante</th>
                                     <th class="text-center" colspan="3">Testes</th>
                                     <th class="text-center" colspan="3">Trabalhos</th>
@@ -92,6 +93,7 @@
                                     @endphp
                                     <tr>
                                         {{-- <td>{{ $estudante->matricula }}</td> --}}
+                                        <td><span class="badge badge-info">{{ $estudante->turma_nome ?? 'N/A' }}</span></td>
                                         <td>{{ $estudante->user->name ?? 'N/A' }}</td>
 
                                         <input type="hidden" name="estudante_id[]" value="{{ $estudante->id }}">

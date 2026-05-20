@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->createRoleIfNotExists('secretaria');
         $this->createRoleIfNotExists('financeiro');
 
+        $this->call(TurmaSeeder::class);
+        $this->call(EstudanteTesteSeeder::class);
+
         // Criar usuário admin
         $this->createUserIfNotExists(
             'Administrador',

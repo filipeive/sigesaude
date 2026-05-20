@@ -61,20 +61,16 @@
                         <div class="mb-3">
                             <p class="mb-1">
                                 <i class="fas fa-graduation-cap text-primary mr-2"></i>
-                                <strong>Curso:</strong> {{ $disciplina->curso->nome }}
+                                <strong>Classe:</strong> {{ $disciplina->classe->nome ?? 'N/A' }}
                             </p>
                             <p class="mb-1">
                                 <i class="fas fa-layer-group text-info mr-2"></i>
-                                <strong>Nível:</strong> {{ $disciplina->nivel->nome }}
-                            </p>
-                            <p class="mb-1">
-                                <i class="fas fa-calendar text-success mr-2"></i>
-                                <strong>Semestre:</strong> {{ $disciplina->semestre }}º
+                                <strong>Nível:</strong> {{ $disciplina->nivel->nome ?? 'N/A' }}
                             </p>
                             <p class="mb-1">
                                 <i class="fas fa-users text-warning mr-2"></i>
                                 <strong>Estudantes:</strong> 
-                                {{ $disciplina->inscricaoDisciplinas()->count() }}
+                                {{ $disciplina->estudantes_count ?? 0 }}
                             </p>
                         </div>
                         <div class="progress mb-3" style="height: 5px;">

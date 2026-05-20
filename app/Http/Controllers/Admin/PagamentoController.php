@@ -3,37 +3,52 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Pagamento, Estudante};
+use App\Models\AnoLectivo;
+use App\Models\Estudante;
 use App\Models\Notificacao;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\NotificacaoPagamento;
-
+use App\Models\Pagamento;
+use App\Models\Turma;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class PagamentoController extends Controller
 {
     /**
+     * ENTIDADE DO SISTEMA (fixa — como no guia de matrícula).
+     * Para alterar, edite este valor.
+     */
+    public const ENTIDADE_BANCARIA = '11151';
+
+    /**
      * Exibe a lista de pagamentos com filtros e paginação.
+     * Filtros disponíveis: estudante, turma, categoria (tipo), status, data_inicio, data_fim, search (referência).
      */
     public function index(Request $request)
     {
-        $query = Pagamento::with('estudante.user');
+        $query = Pagamento::with(['estudante.user', 'estudante.turma', 'turma']);
 
-        // Filtro por status
+        // ── Filtro por Estudante ──
+        if ($request->filled('estudante')) {
+            $query->whereHas('estudante.user', fn ($q) => $q->where('name', 'like', '%'.$request->estudante.'%'));
+        }
+
+        // ── Filtro por Turma ──
+        if ($request->filled('turma_id')) {
+            $query->where('turma_id', $request->turma_id);
+        }
+
+        // ── Filtro por Categoria (Tipo de Pagamento) ──
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
+
+        // ── Filtro por Status ──
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Filtro por estudante
-        if ($request->filled('estudante')) {
-            $query->whereHas('estudante.user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->estudante . '%');
-            });
-        }
-
-        // Filtro por data de vencimento
+        // ── Filtro por Data ──
         try {
             if ($request->filled('data_inicio')) {
                 $dataInicio = Carbon::createFromFormat('d/m/Y', $request->data_inicio)->startOfDay();
@@ -41,7 +56,6 @@ class PagamentoController extends Controller
             if ($request->filled('data_fim')) {
                 $dataFim = Carbon::createFromFormat('d/m/Y', $request->data_fim)->endOfDay();
             }
-            
             if (isset($dataInicio) && isset($dataFim)) {
                 $query->whereBetween('data_vencimento', [$dataInicio, $dataFim]);
             } elseif (isset($dataInicio)) {
@@ -53,103 +67,184 @@ class PagamentoController extends Controller
             return back()->withErrors(['data' => 'Formato de data inválido. Use DD/MM/YYYY.']);
         }
 
-        // Ordenação
+        // ── Ordenação ──
         $ordem = $request->get('ordem', 'data_vencimento');
         $direcao = $request->get('direcao', 'desc');
         $query->orderBy($ordem, $direcao);
 
-        // Paginação
+        // ── Paginação ──
         $pagamentos = $query->paginate(10)->appends($request->all());
 
-        // Dados para filtros
+        // ── Dados auxiliares ──
         $estudantes = Estudante::with('user')->get();
+        $turmas = Turma::with('classe')->orderBy('nome')->get();
+        $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+        $categorias = [
+            'propina' => 'Propina Mensal',
+            'matricula' => 'Matrícula',
+            'taxa' => 'Taxa / Outros',
+            'inscricao' => 'Inscrição',
+        ];
 
-        return view('admin.pagamentos.index', compact('pagamentos', 'estudantes'));
+        // ── Estatísticas Rápidas ──
+        $totalPendentes = Pagamento::where('status', 'pendente')->count();
+        $totalVencidas = Pagamento::where('status', 'pendente')
+            ->where('data_vencimento', '<', now())
+            ->count();
+        $totalPagos = Pagamento::where('status', 'pago')->count();
+
+        return view('admin.pagamentos.index', compact(
+            'pagamentos', 'estudantes', 'turmas', 'anosLectivos', 'categorias',
+            'totalPendentes', 'totalVencidas', 'totalPagos'
+        ));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // CREATE / STORE
+    // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Exibe o formulário de criação de pagamento.
-     */
-    public function create()
+    public function create(Request $request)
     {
         $estudantes = Estudante::with('user')->get();
-        return view('admin.pagamentos.create', compact('estudantes'));
+        $turmas = Turma::with('classe')->orderBy('nome')->get();
+        $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+        $anoAtivo = AnoLectivo::where('status', 'Ativo')->first();
+        $metodosPagamento = [
+            'dinheiro'     => 'Dinheiro',
+            'transferencia'=> 'Transferência',
+            'mpesa'        => 'M-Pesa',
+            'emola'        => 'eMola',
+            'mkesh'        => 'M-Kesh',
+            'cheque'       => 'Cheque',
+            'outro'        => 'Outro',
+        ];
+
+        // Se vier turma por querystring, pré-seleciona
+        $turmaSelecionada = $request->get('turma_id')
+            ? Turma::with('estudantes.user')->find($request->get('turma_id'))
+            : null;
+
+        return view('admin.pagamentos.create', compact(
+            'estudantes', 'turmas', 'anosLectivos', 'anoAtivo', 'turmaSelecionada', 'metodosPagamento'
+        ));
     }
 
-    /**
-     * Armazena um novo pagamento no banco de dados.
-     */
     public function store(Request $request)
     {
         $request->validate([
             'estudante_id' => 'required|exists:estudantes,id',
-            'data_vencimento' => 'required|date',
+            'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
             'valor' => 'required|numeric|min:0',
+            'data_vencimento' => 'required|date',
+            'tipo' => 'nullable|in:propina,matricula,taxa,inscricao',
+            'turma_id' => 'nullable|exists:turmas,id',
+            'metodo_pagamento' => 'nullable|in:dinheiro,transferencia,mpesa,emola,mkesh,cheque,outro',
         ]);
 
-        // Gerar referência única
         $referencia = Pagamento::gerarReferencia();
 
-        // Criar pagamento
         $pagamento = Pagamento::create([
             'estudante_id' => $request->estudante_id,
-            'valor' => $request->valor ?? 2500, // Valor padrão se não for especificado
+            'ano_lectivo_id' => $request->ano_lectivo_id,
+            'valor' => $request->valor ?? 2500,
             'data_vencimento' => $request->data_vencimento,
             'referencia' => $referencia,
-            'status' => 'pendente', // Status inicial
-            'observacao' => $request->observacao,
+            'status' => 'pendente',
+            'tipo' => $request->tipo,
+            'turma_id' => $request->turma_id,
+            'metodo_pagamento' => $request->metodo_pagamento,
+            'descricao' => $request->observacao,
         ]);
 
-        // Notificar o estudante
         $estudante = $pagamento->estudante;
         Notificacao::notificarPagamentoPendente($estudante->user_id, $pagamento);
 
         return redirect()->route('admin.pagamentos.index')
             ->with('success', 'Pagamento criado e notificação enviada com sucesso!');
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // SHOW — com instruções de pagamento
+    // ─────────────────────────────────────────────────────────────
+
+    public function show(Pagamento $pagamento)
+    {
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo', 'turma']);
+        $pagamento->observacao = $pagamento->observacao ? nl2br($pagamento->observacao) : null;
+
+        $estudantes = Estudante::with('user')->get();
+        $turmas = Turma::with('classe')->orderBy('nome')->get();
+        $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+
+        // Texto de instrução conforme o tipo
+        $instrucoes = [
+            'propina' => 'Propina mensal referente ao mês indicado. Deve ser saldada até ao dia 10 de cada mês.',
+            'matricula' => 'Pagamento da matrícula anual. Utilize os dados abaixo para efectuar o pagamento em qualquer ATM ou Internet Banking.',
+            'taxa' => 'Taxa adicional ou multa. A referência acima é utilizada para efectuar o pagamento.',
+            'inscricao' => 'Taxa de inscrição para o ano lectivo corrente. Não reembolsável.',
+        ];
+        $instrucaoTexto = $instrucoes[$pagamento->tipo] ?? $instrucoes['taxa'];
+
+        return view('admin.pagamentos.show', compact(
+            'pagamento', 'estudantes', 'turmas', 'anosLectivos', 'instrucaoTexto'
+        ));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // EDIT / UPDATE
+    // ─────────────────────────────────────────────────────────────
+
     public function edit(Pagamento $pagamento)
     {
         $estudantes = Estudante::with('user')->get();
-        return view('admin.pagamentos.edit', compact('pagamento', 'estudantes'));
+        $turmas = Turma::orderBy('nome')->get();
+        $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+        $metodosPagamento = [
+            'dinheiro'     => 'Dinheiro',
+            'transferencia'=> 'Transferência',
+            'mpesa'        => 'M-Pesa',
+            'emola'        => 'eMola',
+            'mkesh'        => 'M-Kesh',
+            'cheque'       => 'Cheque',
+            'outro'        => 'Outro',
+        ];
+
+        return view('admin.pagamentos.edit', compact('pagamento', 'estudantes', 'turmas', 'anosLectivos', 'metodosPagamento'));
     }
+
     public function update(Request $request, Pagamento $pagamento)
     {
         $request->validate([
             'estudante_id' => 'required|exists:estudantes,id',
+            'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
             'data_vencimento' => 'required|date',
             'valor' => 'required|numeric|min:0',
             'status' => 'required|in:pago,pendente,cancelado',
+            'tipo' => 'nullable|in:propina,matricula,taxa,inscricao',
+            'turma_id' => 'nullable|exists:turmas,id',
+            'metodo_pagamento' => 'nullable|in:dinheiro,transferencia,mpesa,emola,mkesh,cheque,outro',
         ]);
 
         $pagamento->update([
             'estudante_id' => $request->estudante_id,
+            'ano_lectivo_id' => $request->ano_lectivo_id,
             'data_vencimento' => $request->data_vencimento,
             'valor' => $request->valor,
             'status' => $request->status,
-            'observacao' => $request->observacao,
+            'tipo' => $request->tipo,
+            'turma_id' => $request->turma_id,
+            'metodo_pagamento' => $request->metodo_pagamento,
+            'descricao' => $request->observacao,
         ]);
 
         return redirect()->route('admin.pagamentos.index')
             ->with('success', 'Pagamento atualizado com sucesso!');
     }
-    /**
-     * Exibe os detalhes de um pagamento.
-     */
-    public function show(Pagamento $pagamento)
-    {
-        // pegar estudantes
-        $estudantes = Estudante::with('user')->get();
 
-        // carregar os dados do pagamento com relacionamentos e tratar observações
-        $pagamento->observacao = $pagamento->observacao? nl2br($pagamento->observacao) : null;
-        $pagamento->load('estudante.user');
-        return view('admin.pagamentos.show', compact('pagamento', 'estudantes'));
-    }
+    // ─────────────────────────────────────────────────────────────
+    // STATUS / RECIBO / EXPORTAR
+    // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Atualiza o status de um pagamento.
-     */
     public function updateStatus(Request $request, Pagamento $pagamento)
     {
         $request->validate([
@@ -159,99 +254,96 @@ class PagamentoController extends Controller
         $pagamento->update([
             'status' => $request->status,
             'data_pagamento' => $request->status == 'pago' ? now() : null,
-            'observacao' => $request->filled('observacao') ? 
-                $pagamento->observacao . "\n" . now()->format('d/m/Y H:i') . " - Status alterado para " . $request->status . ". " . $request->observacao : 
-                $pagamento->observacao
+            'observacao' => $request->filled('observacao')
+                ? ($pagamento->observacao ?? '')."\n".now()->format('d/m/Y H:i')." — Status alterado para {$request->status}. ".$request->observacao
+                : $pagamento->observacao,
         ]);
 
         return redirect()->route('admin.pagamentos.index')
             ->with('success', 'Status do pagamento atualizado com sucesso!');
     }
 
-    /**
-     * Remove um pagamento do banco de dados.
-     */
-    public function destroy(Pagamento $pagamento)
+    public function downloadRecibo(Pagamento $pagamento)
     {
-        $pagamento->delete();
-        return redirect()->route('admin.pagamentos.index')
-            ->with('success', 'Pagamento removido com sucesso!');
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo', 'turma']);
+
+        $pdf = Pdf::loadView('pdf.recibo_pagamento', compact('pagamento'));
+
+        return $pdf->download('Recibo_'.$pagamento->referencia.'.pdf');
     }
-    
-    /**
-     * Exporta pagamentos para CSV
-     */
+
     public function exportar(Request $request)
     {
-        // Aplicar os mesmos filtros que no método index()
         $query = Pagamento::with('estudante.user');
 
-        // Filtro por status
+        if ($request->filled('estudante')) {
+            $query->whereHas('estudante.user', fn ($q) => $q->where('name', 'like', '%'.$request->estudante.'%'));
+        }
+        if ($request->filled('turma_id')) {
+            $query->where('turma_id', $request->turma_id);
+        }
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
-        // Filtro por estudante
-        if ($request->filled('estudante')) {
-            $query->whereHas('estudante.user', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->estudante . '%');
-            });
-        }
-
-        // Filtro por data de vencimento
         if ($request->filled('data_inicio') && $request->filled('data_fim')) {
             $query->whereBetween('data_vencimento', [
                 Carbon::parse($request->data_inicio)->startOfDay(),
-                Carbon::parse($request->data_fim)->endOfDay()
+                Carbon::parse($request->data_fim)->endOfDay(),
             ]);
-        } elseif ($request->filled('data_inicio')) {
-            $query->where('data_vencimento', '>=', Carbon::parse($request->data_inicio)->startOfDay());
-        } elseif ($request->filled('data_fim')) {
-            $query->where('data_vencimento', '<=', Carbon::parse($request->data_fim)->endOfDay());
         }
 
-        // Ordenação
         $ordem = $request->ordem ?? 'data_vencimento';
         $direcao = $request->direcao ?? 'desc';
         $query->orderBy($ordem, $direcao);
 
-        // Buscar os pagamentos filtrados
         $pagamentos = $query->get();
 
-        // Configurar o nome do arquivo
-        $fileName = 'pagamentos_' . date('Y-m-d') . '.csv';
-
-        // Configurar os headers para download
+        $fileName = 'pagamentos_'.date('Y-m-d').'.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
 
-        // Função para gerar o CSV
-        $callback = function() use ($pagamentos) {
+        $callback = function () use ($pagamentos) {
             $file = fopen('php://output', 'w');
-
-            // Adicionar BOM para garantir que o arquivo seja aberto corretamente no Excel
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            // Cabeçalho do CSV
-            fputcsv($file, ['Referência', 'Estudante', 'Valor (MZN)', 'Data de Vencimento', 'Status']);
-
-            // Dados do CSV
-            foreach ($pagamentos as $pagamento) {
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, ['Referência', 'Estudante', 'Turma', 'Categoria', 'Valor (MZN)', 'Vencimento', 'Status']);
+            foreach ($pagamentos as $p) {
                 fputcsv($file, [
-                    $pagamento->referencia,
-                    $pagamento->estudante->user->name,
-                    number_format($pagamento->valor, 2, ',', '.'), // Formatar valor
-                    Carbon::parse($pagamento->data_vencimento)->format('d/m/Y'), // Formatar data
-                    ucfirst($pagamento->status), // Formatar status
+                    $p->referencia,
+                    $p->estudante->user->name ?? 'N/A',
+                    $p->turma?->nome ?? '—',
+                    $p->tipo ?? '—',
+                    number_format($p->valor, 2, ',', '.'),
+                    Carbon::parse($p->data_vencimento)->format('d/m/Y'),
+                    ucfirst($p->status),
                 ]);
             }
-
             fclose($file);
         };
 
-        // Retornar a resposta de download
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Remove um pagamento.
+     */
+    public function destroy(Pagamento $pagamento)
+    {
+        $pagamento->delete();
+
+        return redirect()->route('admin.pagamentos.index')
+            ->with('success', 'Pagamento removido com sucesso!');
+    }
+
+    /**
+     * Página de configurações (stub).
+     */
+    public function configuracoes()
+    {
+        return view('admin.pagamentos.configuracoes');
     }
 }

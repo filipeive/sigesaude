@@ -18,7 +18,7 @@
         <div class="card-body">
             <div class="mb-3">
                 <p class="card-text">
-                    <strong><i class="fas fa-graduation-cap mr-2"></i>Curso:</strong> {{ $disciplina->curso->nome }}<br>
+                    <strong><i class="fas fa-school mr-2"></i>Classe:</strong> {{ $disciplina->classe->nome ?? 'N/A' }}<br>
                     <strong><i class="fas fa-layer-group mr-2"></i>Nível:</strong> {{ $disciplina->nivel->nome }}
                 </p>
                 

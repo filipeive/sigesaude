@@ -1,5 +1,5 @@
 {{-- resources/views/components/disciplinas-filtro.blade.php --}}
-@props(['cursos' => [], 'niveis' => []])
+@props(['classes' => [], 'niveis' => []])
 
 <div class="card card-outline card-info mb-4 collapsed-card">
     <div class="card-header">
@@ -15,12 +15,12 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
-                        <label>Curso</label>
-                        <select class="form-control select2" name="curso_id" data-placeholder="Selecione um curso">
-                            <option value="">Todos os Cursos</option>
-                            @foreach($cursos as $curso)
-                                <option value="{{ $curso->id }}" {{ request('curso_id') == $curso->id ? 'selected' : '' }}>
-                                    {{ $curso->nome }}
+                        <label>Classe</label>
+                        <select class="form-control select2" name="classe_id" data-placeholder="Selecione uma classe">
+                            <option value="">Todas as Classes</option>
+                            @foreach($classes as $classe)
+                                <option value="{{ $classe->id }}" {{ request('classe_id') == $classe->id ? 'selected' : '' }}>
+                                    {{ $classe->nome }}
                                 </option>
                             @endforeach
                         </select>
