@@ -313,21 +313,25 @@ return [
             'can' => 'auth', // Apenas usuários autenticados podem ver isso
         ],
 
+        // ═══════════════════════════════════════
         // Menu para Admin
+        // ═══════════════════════════════════════
         [
             'text' => 'Dashboard',
             'url' => 'admin',
             'icon' => 'fas fa-fw fa-tachometer-alt',
-            'can' => 'isAdmin', // Visível apenas para admin
+            'can' => 'isAdmin',
         ],
+
+        // ── Pessoas ──────────────────────────
         [
-            'header' => 'Gestão de Usuários',
+            'header' => 'PESSOAS',
             'can' => 'isAdmin',
         ],
         [
             'text' => 'Estudantes',
             'url' => 'admin/estudantes',
-            'icon' => 'fas fa-fw fa-users',
+            'icon' => 'fas fa-fw fa-user-graduate',
             'can' => 'isAdmin',
         ],
         [
@@ -336,9 +340,10 @@ return [
             'icon' => 'fas fa-fw fa-chalkboard-teacher',
             'can' => 'isAdmin',
         ],
+
+        // ── Gestão Acadêmica ─────────────────
         [
-            'header' => 'Gestão Acadêmica',
-            'icon' => 'fas fa-fw fa-graduation-cap',
+            'header' => 'GESTÃO ACADÊMICA',
             'can' => 'isAdmin',
         ],
         [
@@ -348,21 +353,9 @@ return [
             'can' => 'isAdmin',
         ],
         [
-            'text' => 'Pré-Inscrições',
-            'url' => 'admin/pre-inscricoes',
-            'icon' => 'fas fa-fw fa-user-plus',
-            'can' => 'isAdmin',
-        ],
-        [
             'text' => 'Turmas',
             'url' => 'admin/turmas',
             'icon' => 'fas fa-fw fa-chalkboard',
-            'can' => 'isAdmin',
-        ],
-        [
-            'text' => 'Anos Lectivos',
-            'url' => 'admin/anos-lectivos',
-            'icon' => 'fas fa-fw fa-calendar-alt',
             'can' => 'isAdmin',
         ],
         [
@@ -372,36 +365,119 @@ return [
             'can' => 'isAdmin',
         ],
         [
+            'text' => 'Anos Lectivos',
+            'url' => 'admin/anos-lectivos',
+            'icon' => 'fas fa-fw fa-calendar-alt',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Pré-Inscrições',
+            'url' => 'admin/pre-inscricoes',
+            'icon' => 'fas fa-fw fa-user-plus',
+            'can' => 'isAdmin',
+        ],
+        [
             'text' => 'Matrículas',
             'url' => 'admin/matriculas',
             'icon' => 'fas fa-fw fa-graduation-cap',
             'can' => 'isAdmin',
         ],
+
+        // ── Notas, Frequência & Desempenho ───
         [
-            'header' => 'Financeiro',
-            'icon' => 'fas fa-fw fa-money-check-alt',
+            'header' => 'NOTAS & DESEMPENHO',
             'can' => 'isAdmin',
         ],
         [
-            'text' => 'Pagamentos',
-            'url' => 'admin/pagamentos',
-            'icon' => 'fas fa-fw fa-money-bill',
+            'text' => 'Gestão de Notas',
+            'icon' => 'fas fa-fw fa-pen-fancy',
             'can' => 'isAdmin',
+            'submenu' => [
+                [
+                    'text' => 'Painel de Notas',
+                    'url' => 'admin/notas',
+                    'icon' => 'fas fa-fw fa-clipboard-list',
+                ],
+                [
+                    'text' => 'Lançar Notas',
+                    'url' => 'admin/notas/create',
+                    'icon' => 'fas fa-fw fa-plus-circle',
+                ],
+                [
+                    'text' => 'Consultar Notas',
+                    'url' => 'admin/notas/ver',
+                    'icon' => 'fas fa-fw fa-search',
+                ],
+            ],
+        ],
+        [
+            'text' => 'Progresso Académico',
+            'icon' => 'fas fa-fw fa-chart-line',
+            'can' => 'isAdmin',
+            'submenu' => [
+                [
+                    'text' => 'Visão Geral',
+                    'url' => 'admin/progresso-academico',
+                    'icon' => 'fas fa-fw fa-chart-bar',
+                ],
+            ],
+        ],
+
+        // ── Gestão Financeira ────────────────
+        [
+            'header' => 'GESTÃO FINANCEIRA',
+            'can' => 'isAdmin',
+        ],
+        [
+            'text' => 'Propinas & Pagamentos',
+            'icon' => 'fas fa-fw fa-money-bill-wave',
+            'can' => 'isAdmin',
+            'submenu' => [
+                [
+                    'text' => 'Listar Pagamentos',
+                    'url' => 'admin/pagamentos',
+                    'icon' => 'fas fa-fw fa-list',
+                ],
+                [
+                    'text' => 'Registar Pagamento',
+                    'url' => 'admin/pagamentos/create',
+                    'icon' => 'fas fa-fw fa-plus-circle',
+                ],
+            ],
         ],
         [
             'text' => 'Financeiro',
-            'url' => 'admin/financeiro',
-            'icon' => 'fas fa-fw fa-chart-line',
+            'icon' => 'fas fa-fw fa-coins',
             'can' => 'isAdmin',
+            'submenu' => [
+                [
+                    'text' => 'Transações',
+                    'url' => 'admin/financeiro',
+                    'icon' => 'fas fa-fw fa-exchange-alt',
+                ],
+                [
+                    'text' => 'Nova Transação',
+                    'url' => 'admin/financeiro/create',
+                    'icon' => 'fas fa-fw fa-plus-circle',
+                ],
+                [
+                    'text' => 'Relatórios',
+                    'url' => 'admin/financeiro/relatorios',
+                    'icon' => 'fas fa-fw fa-chart-pie',
+                ],
+                [
+                    'text' => 'Configurações',
+                    'url' => 'admin/financeiro/configuracoes',
+                    'icon' => 'fas fa-fw fa-cog',
+                ],
+            ],
         ],
+
+        // ── Sistema ──────────────────────────
         [
-            'header' => 'Configurações',
-            'icon' => 'fas fa-fw fa-cogs',
-            'url' => 'admin/configuracoes',
-            'icon' => 'fas fa-fw fa-cog',
+            'header' => 'SISTEMA',
             'can' => 'isAdmin',
         ],
-        //gerenciar notificaciones
         [
             'text' => 'Notificações',
             'url' => 'admin/notificacoes',
@@ -409,19 +485,15 @@ return [
             'can' => 'isAdmin',
         ],
         [
-            'header' => 'Gestão de Usuários',
-            'can' => 'isAdmin',
-        ],
-        [
             'text' => 'Usuários',
-            'icon' => 'fas fa-users',
+            'icon' => 'fas fa-fw fa-users-cog',
             'url' => 'admin/users',
             'can' => 'isAdmin',
         ],
         [
             'text' => 'Meu Perfil',
             'url' => 'admin/perfil',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-user-circle',
             'can' => 'isAdmin',
         ],
 

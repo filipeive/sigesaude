@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CursoController;
 use App\Http\Controllers\Admin\DisciplinaController;
 use App\Http\Controllers\Admin\DocenteController as AdminDocenteController;
 use App\Http\Controllers\Admin\EstudanteController as AdminEstudanteController;
+use App\Http\Controllers\Admin\FinanceiroController;
 use App\Http\Controllers\Admin\MatriculaController;
 use App\Http\Controllers\Admin\NotasController;
 use App\Http\Controllers\Admin\PagamentoController;
@@ -170,14 +171,23 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
     });
 
     // Financeiro
-    Route::get('/admin/financeiro', [PagamentoController::class, 'index'])->name('admin.financeiro.index');
-    Route::get('/admin/financeiro/create', [PagamentoController::class, 'create'])->name('admin.financeiro.create');
-    Route::post('/admin/financeiro', [PagamentoController::class, 'store'])->name('admin.financeiro.store');
-    Route::get('/admin/financeiro/{id}', [PagamentoController::class, 'show'])->name('admin.financeiro.show');
-    Route::get('/admin/financeiro/{id}/edit', [PagamentoController::class, 'edit'])->name('admin.financeiro.edit');
-    Route::put('/admin/financeiro/{id}', [PagamentoController::class, 'update'])->name('admin.financeiro.update');
-    Route::delete('/admin/financeiro/{id}', [PagamentoController::class, 'destroy'])->name('admin.financeiro.destroy');
-    Route::get('/admin/financeiro/configuracoes', [PagamentoController::class, 'configuracoes'])->name('admin.financeiro.configuracoes');
+    Route::prefix('admin/financeiro')->name('admin.financeiro.')->group(function () {
+        Route::get('/', [FinanceiroController::class, 'index'])->name('index');
+        Route::get('/create', [FinanceiroController::class, 'create'])->name('create');
+        Route::post('/', [FinanceiroController::class, 'store'])->name('store');
+        Route::get('/relatorios', [FinanceiroController::class, 'relatorios'])->name('relatorios');
+        Route::post('/relatorios/gerar', [FinanceiroController::class, 'gerarRelatorio'])->name('relatorios.gerar');
+        Route::get('/relatorios/{id}', [FinanceiroController::class, 'showRelatorio'])->name('relatorios.show');
+        Route::get('/relatorios/{id}/download', [FinanceiroController::class, 'downloadRelatorio'])->name('relatorios.download');
+        Route::delete('/relatorios/{id}', [FinanceiroController::class, 'destroyRelatorio'])->name('relatorios.destroy');
+        Route::get('/configuracoes', [FinanceiroController::class, 'configuracoes'])->name('configuracoes');
+        Route::put('/configuracoes', [FinanceiroController::class, 'atualizarConfiguracoes'])->name('configuracoes.update');
+        Route::get('/ajax-grafico', [FinanceiroController::class, 'ajaxGrafico'])->name('ajax.grafico');
+        Route::get('/{id}', [FinanceiroController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [FinanceiroController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [FinanceiroController::class, 'update'])->name('update');
+        Route::delete('/{id}', [FinanceiroController::class, 'destroy'])->name('destroy');
+    });
 
     // Notificações
     Route::prefix('admin/notificacoes')->name('admin.notificacoes.')->group(function () {
