@@ -84,44 +84,43 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($estudantes as $idx => $item)
+                                @foreach ($estudantes as $idx => $est)
                                     @php
-                                        $estudante = $item['estudante'];
-                                        $nota = $item['nota_trimestre'];
+                                        $nota = $est->nota_trimestre;
                                     @endphp
                                     <tr>
-                                        <td><span class="badge badge-info">{{ $estudante->turma_nome ?? 'N/A' }}</span></td>
-                                        <td><strong>{{ $estudante->user->name ?? 'N/A' }}</strong></td>
+                                        <td><span class="badge badge-info">{{ $est->turma->nome ?? 'N/A' }}</span></td>
+                                        <td><strong>{{ $est->user->name ?? 'N/A' }}</strong></td>
 
                                         <!-- ACS1 -->
                                         <td>
                                             <input type="number" step="0.5" min="0" max="20"
-                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs1]"
-                                                value="{{ $nota?->acs1 }}" data-estudante="{{ $estudante->id }}">
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $est->id }}][acs1]"
+                                                value="{{ $nota?->acs1 }}" data-estudante="{{ $est->id }}">
                                         </td>
                                         <!-- ACS2 -->
                                         <td>
                                             <input type="number" step="0.5" min="0" max="20"
-                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs2]"
-                                                value="{{ $nota?->acs2 }}" data-estudante="{{ $estudante->id }}">
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $est->id }}][acs2]"
+                                                value="{{ $nota?->acs2 }}" data-estudante="{{ $est->id }}">
                                         </td>
                                         <!-- ACS3 -->
                                         <td>
                                             <input type="number" step="0.5" min="0" max="20"
-                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs3]"
-                                                value="{{ $nota?->acs3 }}" data-estudante="{{ $estudante->id }}">
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $est->id }}][acs3]"
+                                                value="{{ $nota?->acs3 }}" data-estudante="{{ $est->id }}">
                                         </td>
                                         <!-- ACP -->
                                         <td>
                                             <input type="number" step="0.5" min="0" max="20"
-                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acp]"
-                                                value="{{ $nota?->acp }}" data-estudante="{{ $estudante->id }}">
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $est->id }}][acp]"
+                                                value="{{ $nota?->acp }}" data-estudante="{{ $est->id }}">
                                         </td>
                                         <!-- ACF -->
                                         <td>
                                             <input type="number" step="0.5" min="0" max="20"
-                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acf]"
-                                                value="{{ $nota?->acf }}" data-estudante="{{ $estudante->id }}">
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $est->id }}][acf]"
+                                                value="{{ $nota?->acf }}" data-estudante="{{ $est->id }}">
                                         </td>
 
                                         <!-- Media Trimestral -->
@@ -137,7 +136,7 @@
 
                                         <!-- Comportamento -->
                                         <td>
-                                            <select name="notas[{{ $estudante->id }}][comportamento]" class="form-control form-control-sm">
+                                            <select name="notas[{{ $est->id }}][comportamento]" class="form-control form-control-sm">
                                                 <option value="">—</option>
                                                 <option value="Bom" {{ $nota?->comportamento == 'Bom' ? 'selected' : '' }}>Bom</option>
                                                 <option value="Razoável" {{ $nota?->comportamento == 'Razoável' ? 'selected' : '' }}>Razoável</option>
@@ -148,7 +147,7 @@
                                         <!-- Faltas -->
                                         <td>
                                             <input type="number" min="0" step="1"
-                                                class="form-control form-control-sm text-center" name="notas[{{ $estudante->id }}][faltas]"
+                                                class="form-control form-control-sm text-center" name="notas[{{ $est->id }}][faltas]"
                                                 value="{{ $nota?->faltas ?? 0 }}">
                                         </td>
                                     </tr>

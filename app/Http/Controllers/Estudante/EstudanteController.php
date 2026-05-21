@@ -86,17 +86,16 @@ class EstudanteController extends Controller
             ->take(5)
             ->get();
 
-        // Notas de frequência do ano actual para progresso
         $disciplinasAtuais = collect();
         if ($estudante->turma && $estudante->turma->classe_id) {
-            $disciplinasAtuais = NotaFrequencia::where('estudante_id', $estudante->id)
+            $disciplinasAtuais = \App\Models\ResultadoFinal::where('estudante_id', $estudante->id)
                 ->where('ano_lectivo_id', $estudante->ano_lectivo_id)
                 ->with('disciplina')
                 ->get()
-                ->map(function ($nota) {
-                    $media = $nota->nota ?: 0;
+                ->map(function ($resultado) {
+                    $media = $resultado->media_frequencia ?: 0;
                     return [
-                        'nome'     => $nota->disciplina->nome ?? 'N/A',
+                        'nome'     => $resultado->disciplina->nome ?? 'N/A',
                         'progresso'=> ($media / 20) * 100,
                         'media'    => $media,
                         'cor'      => $this->getCorProgresso($media),
