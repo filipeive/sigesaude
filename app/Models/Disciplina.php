@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
@@ -18,7 +17,7 @@ class Disciplina extends Model
         'carga_horaria',
         'docente_id',
         'classe_id',
-        'nivel_id'
+        'nivel_id',
     ];
 
     public function docente()
@@ -58,17 +57,27 @@ class Disciplina extends Model
     {
         return $this->belongsTo(AnoLectivo::class);
     }
-    //relacao com turma
+
+    // relacao com turma
     public function turma()
     {
         return $this->belongsTo(Turma::class);
     }
 
     /**
-     * Obter as inscricoes_disciplinas desta disciplina
+     * Obter as inscricao_disciplinas desta disciplina
      */
     public function inscricaoDisciplinas()
     {
         return $this->hasMany(InscricaoDisciplina::class, 'disciplina_id');
+    }
+
+    /**
+     * Obter os resultados finais (classificacao_final) dos estudantes nesta disciplina.
+     * Usa a tabela resultados_finais, que substituiu o antigo campo status de notas_frequencia.
+     */
+    public function resultadosFinais()
+    {
+        return $this->hasMany(ResultadoFinal::class);
     }
 }

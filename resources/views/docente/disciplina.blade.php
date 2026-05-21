@@ -48,9 +48,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ $disciplina->inscricaoDisciplinas()->whereHas('notasFrequencia', function($q) {
-                        $q->where('status', 'Admitido');
-                    })->count() }}</h3>
+                    <h3>{{ $disciplina->resultadosFinais()->where('classificacao_final', 'Admitido')->count() }}</h3>
                     <p>Estudantes Admitidos</p>
                 </div>
                 <div class="icon">
@@ -61,9 +59,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3>{{ $disciplina->inscricaoDisciplinas()->whereHas('notasFrequencia', function($q) {
-                        $q->where('status', 'Pendente');
-                    })->count() }}</h3>
+                    <h3>{{ $disciplina->resultadosFinais()->where('classificacao_final', 'Pendente')->count() }}</h3>
                     <p>Avaliações Pendentes</p>
                 </div>
                 <div class="icon">
@@ -74,9 +70,7 @@
         <div class="col-xl-3 col-md-6">
             <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>{{ $disciplina->inscricaoDisciplinas()->whereHas('notasFrequencia', function($q) {
-                        $q->where('status', 'Excluído');
-                    })->count() }}</h3>
+                    <h3>{{ $disciplina->resultadosFinais()->where('classificacao_final', 'Excluído')->count() }}</h3>
                     <p>Estudantes Excluídos</p>
                 </div>
                 <div class="icon">

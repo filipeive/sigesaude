@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class InscricaoDisciplina extends Model
@@ -17,7 +16,10 @@ class InscricaoDisciplina extends Model
         'tipo',
     ];
 
-    //relacao estudante
+    /**
+     * Estudante inscrito (via coluna indirecta: passa por Inscricao)
+     * Mantido compatível com o uso existente em vistas.
+     */
     public function estudante()
     {
         return $this->hasOne(Estudante::class, 'id', 'estudante_id');
@@ -39,15 +41,15 @@ class InscricaoDisciplina extends Model
         return $this->hasOne(NotaFrequencia::class, 'disciplina_id', 'disciplina_id')
             ->where('estudante_id', function ($query) {
                 $query->select('estudante_id')
-                      ->from('inscricoes')
-                      ->whereColumn('inscricoes.id', 'inscricao_disciplinas.inscricao_id')
-                      ->limit(1);
+                    ->from('inscricoes')
+                    ->whereColumn('inscricoes.id', 'inscricao_disciplinas.inscricao_id')
+                    ->limit(1);
             });
     }
+
     // Método auxiliar para obter o ID do estudante
     public function getEstudanteId()
     {
         return optional($this->inscricao)->estudante_id;
     }
-
 }
