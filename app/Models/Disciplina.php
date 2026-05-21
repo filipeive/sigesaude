@@ -63,4 +63,12 @@ class Disciplina extends Model
     {
         return $this->belongsTo(Turma::class);
     }
+
+    /**
+     * Obter as inscricoes_disciplinas desta disciplina
+     */
+    public function inscricaoDisciplinas()
+    {
+        return $this->hasMany(InscricaoDisciplina::class, 'disciplina_id');
+    }
 }

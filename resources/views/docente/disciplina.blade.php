@@ -236,6 +236,27 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: Detalhes do Estudante -->
+<div class="modal fade" id="detalhesModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-user-graduate mr-2"></i> Detalhes do Estudante</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detalhesModalBody">
+                <div class="text-center py-5"><i class="fas fa-spinner fa-2x fa-spin"></i></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnEditarNotasModal"><i class="fas fa-edit mr-1"></i> Editar Notas</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('css')
@@ -399,6 +420,125 @@ $(document).ready(function() {
     }).on('mouseup mouseleave', function() {
         $(this).removeClass('active');
     });
+
+    // =============================================================
+    //  Funções de interacción dos botões da página
+    // =============================================================
+
+    var disciplinaId = {{ $disciplina->id }};
+
+    // Imprime a pauta no navegador
+    function imprimirPauta() {
+        window.open(
+            '{{ route('docente.notas_frequencia.pauta', $disciplina->id) }}',
+            '_blank'
+        );
+    }
+
+    // Trigger do botão Excel do DataTables
+    function exportarLista() {
+        $('.buttons-excel').trigger('click');
+    }
+
+    // Mostra um modal com os detalhes de um estudante
+    function verDetalhes(estudanteId) {
+        var url = '/docente/disciplinas/' + disciplinaId + '/estudante/' + estudanteId + '/detalhes';
+        $('#detalhesModal').modal('show');
+        $('#detalhesModalBody').html(
+            '<div class="text-center py-5"><i class="fas fa-spinner fa-2x fa-spin"></i></div>'
+        );
+
+        $.get(url, function (data) {
+            if (data.error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: data.error,
+                });
+                $('#detalhesModal').modal('hide');
+                return;
+            }
+
+            var e = data.estudante;
+            var avatar = e.avatar ? e.avatar : '{{ asset('img/default-avatar.png') }}';
+
+            // Monta as linhas da tabela de notas
+            var notasHtml = '';
+            for (var i = 0; i < e.notas.length; i++) {
+                var n = e.notas[i];
+                var mediaColor = n.media_trimestral < 10 ? 'text-danger' : 'text-success';
+                notasHtml +=
+                    '<tr class="text-center">' +
+                    '<td><span class="badge badge-primary">' + n.trimestre + '&ordm; Trimestre</span></td>' +
+                    '<td>' + (n.acs1  !== null ? n.acs1  : '&mdash;') + '</td>' +
+                    '<td>' + (n.acs2  !== null ? n.acs2  : '&mdash;') + '</td>' +
+                    '<td>' + (n.acs3  !== null ? n.acs3  : '&mdash;') + '</td>' +
+                    '<td>' + (n.acp   !== null ? n.acp   : '&mdash;') + '</td>' +
+                    '<td>' + (n.acf   !== null ? n.acf   : '&mdash;') + '</td>' +
+                    '<td class="' + mediaColor + ' font-weight-bold">' +
+                        (n.media_trimestral !== null ? n.media_trimestral.toFixed(1) : '&mdash;') +
+                    '</td>' +
+                    '<td>' + (n.comportamento !== null ? n.comportamento : '&mdash;') + '</td>' +
+                    '<td>' + (n.faltas   !== null ? n.faltas   : '&mdash;') + '</td>' +
+                    '<td><span class="badge badge-' +
+                        (n.status === 'Admitido' ? 'success' :
+                         n.status === 'Pendente'  ? 'warning' :
+                         n.status === 'Exclu&iacute;do' ? 'danger' : 'secondary') +
+                        '">' + (n.status || 'N&atilde;o avaliado') + '</span></td>' +
+                    '</tr>';
+            }
+
+            $('#detalhesModalBody').html(
+                '<div class="row">' +
+                    '<div class="col-md-4 text-center mb-3">' +
+                        '<img src="' + avatar + '" class="img-circle" style="width:100px;height:100px;object-fit:cover;">' +
+                        '<h4 class="mt-2">' + e.nome + '</h4>' +
+                        '<span class="badge badge-info">' + e.turma + '</span>' +
+                        '<span class="badge badge-secondary ml-1">' + e.matricula + '</span>' +
+                        '<span class="badge badge-' + (e.genero === 'Masculino' ? 'primary' : 'danger') + ' ml-1">' + e.genero + '</span>' +
+                        '<p class="text-muted mt-2"><strong>Tipo:</strong> ' + e.tipo + '</p>' +
+                    '</div>' +
+                    '<div class="col-md-8">' +
+                        '<h5><i class="fas fa-clipboard-list mr-1"></i> Notas de Frequência</h5>' +
+                        '<div class="table-responsive">' +
+                            '<table class="table table-sm table-bordered">' +
+                                '<thead class="thead-light">' +
+                                    '<tr>' +
+                                        '<th>Trim.</th>' +
+                                        '<th>ACS1</th><th>ACS2</th><th>ACS3</th>' +
+                                        '<th>ACP</th><th>ACF</th><th>MT</th>' +
+                                        '<th>Comp.</th><th>Faltas</th><th>Status</th>' +
+                                    '</tr>' +
+                                '</thead>' +
+                                '<tbody>' +
+                                    (notasHtml || '<tr><td colspan="10" class="text-center text-muted">Não há notas registadas.</td></tr>') +
+                                '</tbody>' +
+                            '</table>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>'
+            );
+
+            $('#btnEditarNotasModal').off('click').on('click', function () {
+                $('#detalhesModal').modal('hide');
+                editarNotas(estudanteId);
+            });
+        }).fail(function () {
+            $('#detalhesModal').modal('hide');
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'Não foi possível carregar as informações do estudante.',
+            });
+        });
+    }
+
+    // Redirecciona para a página de lançamento de notas do estudante na disciplina
+    function editarNotas(estudanteId) {
+        window.location.href = '{{ route('docente.notas_frequencia.show', $disciplina->id) }}' +
+                               '?estudante_id=' + estudanteId;
+    }
+
 });
 </script>
 @stop

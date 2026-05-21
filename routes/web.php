@@ -293,6 +293,7 @@ Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(func
     // Disciplinas Lecionadas
     Route::get('/disciplinas', [App\Http\Controllers\Docente\DocenteController::class, 'disciplinas'])->name('docente.disciplinas');
     Route::get('/disciplinas/{id}', [App\Http\Controllers\Docente\DocenteController::class, 'show'])->name('docente.disciplina');
+    Route::get('/disciplinas/{disciplina}/estudante/{estudante}/detalhes', [App\Http\Controllers\Docente\DocenteController::class, 'estudanteDetalhes'])->name('docente.disciplina.estudante.detalhes');
     Route::get('/turmas', [App\Http\Controllers\Docente\DocenteController::class, 'turmas'])->name('docente.turmas');
 
     // Notas de Frequência

@@ -200,7 +200,7 @@
                     </ul>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="javascript:void(0)" class="uppercase">Ver Todos os Avisos</a>
+                    <a href="{{ route('docente.notificacoes.index') }}" class="uppercase">Ver Todos os Avisos</a>
                 </div>
             </div>
             
@@ -390,6 +390,23 @@ $(function () {
     
     // Inicializar widgets AdminLTE
     $('[data-widget="todo-list"]').TodoList();
+
+    // Adicionar Tarefa: prompt + insere na lista
+    $('.todo-list').closest('.card').find('.btn-primary[type="button"]').on('click', function () {
+        var tarefa = prompt('Descreva a nova tarefa:');
+        if (!tarefa) return;
+        var hoje   = new Date();
+        var dias   = Math.floor(Math.random() * 5) + 1;
+        var colors = ['badge-danger','badge-info','badge-primary','badge-success'];
+        var li = '<li>' +
+            '<span class="handle"><i class="fas fa-ellipsis-v"></i><i class="fas fa-ellipsis-v"></i></span>' +
+            '<div class="icheck-primary d-inline ml-2"><input type="checkbox" value="" name="todo_new"><label></label></div>' +
+            '<span class="text">' + tarefa + '</span>' +
+            '<small class="badge ' + colors[dias % colors.length] + '"><i class="far fa-clock"></i> ' + dias + ' dias</small>' +
+            '</li>';
+        $('.todo-list').append(li);
+        $('[data-widget="todo-list"]').TodoList();
+    });
 });
 </script>
 @endsection

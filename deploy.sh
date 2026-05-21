@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh -i /home/fdev-ms/.ssh/ssh-key-2025-10-20.key -o StrictHostKeyChecking=no ubuntu@[IP_ADDRESS] "cd /var/www/html/sigesaude && git pull origin main && php artisan optimize:clear" 2>&1 || true
