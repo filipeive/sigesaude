@@ -142,11 +142,11 @@
                                             <a class="dropdown-item" href="{{ route('docente.notas_frequencia.show', $disciplina->id) }}">
                                                 <i class="fas fa-clipboard-list"></i> Frequência
                                             </a>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item" href="{{ route('docente.notas_exames.show', $disciplina->id) }}">
                                                 <i class="fas fa-file-alt"></i> Exames
                                             </a>
                                             <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item" href="#">
+                                            <a class="dropdown-item" href="{{ route('docente.notas_frequencia.show', $disciplina->id) }}">
                                                 <i class="fas fa-users"></i> Lista de Estudantes
                                             </a>
                                         </div>
@@ -220,7 +220,7 @@
                     <div id="calendar" style="width: 100%"></div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="javascript:void(0)" class="uppercase">Ver Calendário Completo</a>
+                    <a href="javascript:void(0)" class="uppercase ver-calendario-completo">Ver Calendário Completo</a>
                 </div>
             </div>
             
@@ -406,6 +406,15 @@ $(function () {
             '</li>';
         $('.todo-list').append(li);
         $('[data-widget="todo-list"]').TodoList();
+    });
+
+    // Ver Calendário Completo: muda o FullCalendar para a vista de semana
+    $(document).on('click', '.ver-calendario-completo', function (e) {
+        e.preventDefault();
+        if ($.fn.fullCalendar) {
+            $('#calendar').fullCalendar('changeView', 'agendaWeek');
+            $('html, body').animate({ scrollTop: $('#calendar').offset().top - 100 }, 400);
+        }
     });
 });
 </script>

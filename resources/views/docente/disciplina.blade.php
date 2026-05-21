@@ -533,6 +533,24 @@ $(document).ready(function() {
                                '?estudante_id=' + estudanteId;
     }
 
+    // Dropdown "Exames": redirecciona para a página de notas de exame da disciplina
+    $('[onclick*="verExames"]').on('click', function (e) {
+        e.preventDefault();
+        window.location.href = '{{ route('docente.notas_exames.show', $disciplina->id) }}';
+    });
+
+    // Dropdown "Lista de Estudantes": abre a página de lançamento de notas (lista)
+    $('[onclick*="verListaEstudantes"]').on('click', function (e) {
+        e.preventDefault();
+        window.location.href = '{{ route('docente.notas_frequencia.show', $disciplina->id) }}';
+    });
+
+    // Dropdown action buttons that use data attributes instead of onclick
+    $(document).on('click', '.btn-group .dropdown-menu a[href="{{ route('docente.notas_exames.show', $disciplina->id) }}"], ' +
+                             '.btn-group .dropdown-menu a[href="{{ route('docente.notas_frequencia.show', $disciplina->id) }}"]', function (e) {
+        e.preventDefault();
+        window.location.href = $(this).attr('href');
+    });
 });
 </script>
 @stop

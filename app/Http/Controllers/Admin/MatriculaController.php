@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Matricula;
-use App\Models\Estudante;
-use App\Models\Turma;
 use App\Models\AnoLectivo;
+use App\Models\Disciplina;
+use App\Models\Estudante;
+use App\Models\Inscricao;
+use App\Models\InscricaoDisciplina;
+use App\Models\Matricula;
+use App\Models\Turma;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class MatriculaController extends Controller
 {
@@ -33,11 +37,12 @@ class MatriculaController extends Controller
 
     public function create()
     {
-        $estudantes = Estudante::with('user')->whereDoesntHave('matriculas', function($q) {
+        $estudantes = Estudante::with('user')->whereDoesntHave('matriculas', function ($q) {
             $q->where('status', 'Ativo');
         })->get();
         $turmas = Turma::orderBy('ano_serie')->get();
         $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+
         return view('admin.matriculas.create', compact('estudantes', 'turmas', 'anosLectivos'));
     }
 
@@ -53,8 +58,8 @@ class MatriculaController extends Controller
         ]);
 
         $data = $request->only(['estudante_id', 'turma_id', 'ano_lectivo_id', 'valor', 'data_matricula', 'observacoes', 'status']);
-        
-        if (!$request->has('status')) {
+
+        if (! $request->has('status')) {
             $data['status'] = 'Pendente';
         }
 
@@ -70,17 +75,44 @@ class MatriculaController extends Controller
             $estudante->update([
                 'turma_id' => $request->turma_id,
                 'ano_lectivo_id' => $request->ano_lectivo_id,
-                'status' => $data['status'] === 'Ativo' ? 'Ativo' : $estudante->status
+                'status' => $data['status'] === 'Ativo' ? 'Ativo' : $estudante->status,
             ]);
+
+            // Se a matrícula ficou Ativa, matricular automaticamente o estudante
+            // nas disciplinas da classe / turma para o ano lectivo em questão.
+            if ($data['status'] === 'Ativo' && $estudante->turma) {
+                $disciplinasIds = Disciplina::where('classe_id', $estudante->turma->classe_id)
+                    ->pluck('id')
+                    ->all();
+
+                $inscricao = Inscricao::firstOrCreate(
+                    [
+                        'estudante_id' => $estudante->id,
+                        'ano_lectivo_id' => $request->ano_lectivo_id,
+                    ],
+                    ['semestre' => 1, 'status' => 'Confirmada', 'referencia' => 'AUTO-'.Str::random(8)]
+                );
+
+                foreach ($disciplinasIds as $dId) {
+                    InscricaoDisciplina::firstOrCreate(
+                        [
+                            'inscricao_id' => $inscricao->id,
+                            'disciplina_id' => $dId,
+                        ],
+                        ['tipo' => 'Normal']
+                    );
+                }
+            }
         });
 
         return redirect()->route('admin.matriculas.index')
-                         ->with('success', 'Matrícula criada com sucesso!');
+            ->with('success', 'Matrícula criada com sucesso!');
     }
 
     public function show(Matricula $matricula)
     {
         $matricula->load(['estudante.user', 'turma', 'anoLectivo']);
+
         return view('admin.matriculas.show', compact('matricula'));
     }
 
@@ -89,6 +121,7 @@ class MatriculaController extends Controller
         $matricula->load(['estudante.user', 'turma', 'anoLectivo']);
         $turmas = Turma::orderBy('ano_serie')->get();
         $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+
         return view('admin.matriculas.edit', compact('matricula', 'turmas', 'anosLectivos'));
     }
 
@@ -109,12 +142,12 @@ class MatriculaController extends Controller
             $estudante->update([
                 'turma_id' => $request->turma_id,
                 'ano_lectivo_id' => $request->ano_lectivo_id,
-                'status' => $request->status === 'Ativo' ? 'Ativo' : $estudante->status
+                'status' => $request->status === 'Ativo' ? 'Ativo' : $estudante->status,
             ]);
         });
 
         return redirect()->route('admin.matriculas.index')
-                         ->with('success', 'Matrícula atualizada com sucesso!');
+            ->with('success', 'Matrícula atualizada com sucesso!');
     }
 
     public function destroy(Matricula $matricula)
@@ -147,7 +180,7 @@ class MatriculaController extends Controller
         });
 
         return redirect()->route('admin.matriculas.index')
-                         ->with('success', 'Matrícula removida com sucesso!');
+            ->with('success', 'Matrícula removida com sucesso!');
     }
 
     /**
@@ -156,17 +189,17 @@ class MatriculaController extends Controller
     public function downloadPdf(Matricula $matricula)
     {
         $matricula->load(['estudante.user', 'turma', 'anoLectivo']);
-        
+
         $pdf = Pdf::loadView('pdf.guia_matricula', compact('matricula'));
-        
-        return $pdf->download('Guia_Matricula_' . $matricula->referencia . '.pdf');
+
+        return $pdf->download('Guia_Matricula_'.$matricula->referencia.'.pdf');
     }
 
     public function confirmar(Matricula $matricula)
     {
         $matricula->update([
             'status' => 'Ativo',
-            'data_confirmacao' => now()
+            'data_confirmacao' => now(),
         ]);
 
         $estudante = $matricula->estudante;
