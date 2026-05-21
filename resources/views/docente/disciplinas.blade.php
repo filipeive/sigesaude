@@ -931,7 +931,7 @@ $(document).ready(function() {
         // Dados para gráfico de estudantes por disciplina
         const disciplinasNomes = {!! json_encode($disciplinas->pluck('nome')) !!};
         const estudantesCount = {!! json_encode($disciplinas->map(function($d) { 
-            return $d->inscricaoDisciplinas()->count(); 
+            return \App\Models\Estudante::whereHas('turma', fn($q) => $q->where('classe_id', $d->classe_id))->where('status', 'Ativo')->count(); 
         })) !!};
         
         // Gráfico de barras - Estudantes por Disciplina
