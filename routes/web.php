@@ -315,7 +315,8 @@ Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(func
     Route::post('/notificacoes/marcar-todas-como-lidas', [App\Http\Controllers\Docente\NotificacaoController::class, 'marcarTodasComoLidas'])->name('docente.notificacoes.marcar_todas_como_lidas');
     Route::delete('/notificacoes/{id}', [App\Http\Controllers\Docente\NotificacaoController::class, 'excluir'])->name('docente.notificacoes.excluir');
     Route::get('/notificacoes/contador', [App\Http\Controllers\Docente\NotificacaoController::class, 'contadorNaoLidas'])->name('docente.notificacoes.contador');
-    Route::get('/notificacoes/filtrar', [App\Http\Controllers\Docente\NotificacaoController::class, 'filtrar'])->name('docente.notificacoes.filtrar');
+    Route::post('/notificacoes/filtrar', [App\Http\Controllers\Docente\NotificacaoController::class, 'filtrar'])->name('docente.notificacoes.filtrar');
+    Route::get('/notificacoes/{id}', [App\Http\Controllers\Docente\NotificacaoController::class, 'show'])->name('docente.notificacoes.show');
 
     // Configurações
 });

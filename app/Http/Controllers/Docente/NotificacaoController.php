@@ -12,7 +12,7 @@ class NotificacaoController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Estatísticas
         $totalNotificacoes = Notificacao::where('user_id', $user->id)->count();
         $naoLidas = Notificacao::where('user_id', $user->id)->where('lida', false)->count();
@@ -51,13 +51,14 @@ class NotificacaoController extends Controller
             'notificacoesEnviadasLista'
         ));
     }
-        
+
     public function create()
     {
         $disciplinas = auth()->user()->docente->disciplinas;
+
         return view('docente.notificacoes.create', compact('disciplinas'));
     }
-    
+
     public function store(Request $request)
     {
         $request->validate([
@@ -67,27 +68,40 @@ class NotificacaoController extends Controller
             'titulo' => 'required|string|max:255',
             'mensagem' => 'required|string',
             'link' => 'nullable|url',
-            'agendada_para' => 'nullable|date|after:now'
+            'agendada_para' => 'nullable|date|after:now',
         ]);
-    
+
+        $link = $request->link === 'null' || $request->link === '' ? null : $request->link;
+
         $notificacoes = [];
         foreach ($request->destinatarios as $userId) {
             $notificacoes[] = Notificacao::create([
                 'user_id' => $userId,
-                'titulo' => $request->titulo,
-                'mensagem' => $request->mensagem,
+                'titulo' => trim(preg_replace('/[\x00-\x1F\x7F]/u', ' ', $request->titulo)),
+                'mensagem' => preg_replace('/[\x00-\x1F\x7F]/u', '', $request->mensagem),
                 'tipo' => $request->tipo,
-                'link' => $request->link,
+                'link' => $link,
                 'agendada_para' => $request->agendada_para,
                 'origem_id' => auth()->user()->docente->id,
-                'origem_type' => 'App\Models\Docente'
+                'origem_type' => 'App\Models\Docente',
             ]);
         }
-    
+
         return redirect()
             ->route('docente.notificacoes.index')
-            ->with('success', 'Notificação enviada com sucesso para ' . count($notificacoes) . ' destinatário(s)');
+            ->with('success', 'Notificação enviada com sucesso para '.count($notificacoes).' destinatário(s)');
     }
+
+    public function show($id)
+    {
+        $notificacao = Notificacao::where('origem_id', auth()->user()->docente->id)
+            ->where('origem_type', 'App\Models\Docente')
+            ->with('user')
+            ->findOrFail($id);
+
+        return view('docente.notificacoes.show', compact('notificacao'));
+    }
+
     public function marcarComoLida($id)
     {
         $notificacao = Notificacao::where('user_id', Auth::id())
@@ -97,7 +111,7 @@ class NotificacaoController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Notificação marcada como lida'
+            'message' => 'Notificação marcada como lida',
         ]);
     }
 
@@ -109,7 +123,7 @@ class NotificacaoController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Todas as notificações foram marcadas como lidas'
+            'message' => 'Todas as notificações foram marcadas como lidas',
         ]);
     }
 
@@ -122,7 +136,7 @@ class NotificacaoController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Notificação excluída com sucesso'
+            'message' => 'Notificação excluída com sucesso',
         ]);
     }
 
@@ -163,6 +177,4 @@ class NotificacaoController extends Controller
 
         return view('docente.notificacoes.index', compact('notificacoes'));
     }
-
-    
 }

@@ -27,6 +27,9 @@
                     Ver link
                 </a>
             @endif
+            <a href="{{ route('docente.notificacoes.show', $notificacao->id) }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-eye mr-1"></i> Ver detalhes
+            </a>
         </div>
     </div>
 @empty
