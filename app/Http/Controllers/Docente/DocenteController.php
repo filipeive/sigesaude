@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Disciplina;
 use App\Models\Docente;
 use App\Models\Departamento;
+use App\Models\Turma;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -132,6 +133,28 @@ class DocenteController extends Controller
         $disciplinas = Disciplina::where('docente_id', $docente->id)->get();
         
         return view('docente.disciplinas', compact('disciplinas'));
+    }
+    public function turmas()
+    {
+        $user = Auth::user();
+        $docente = Docente::where('user_id', $user->id)->first();
+        if (!$docente) {
+            return redirect()->route('docente.dashboard')->with('error', 'Perfil de docente não encontrado.');
+        }
+
+        $classeIds = Disciplina::where('docente_id', $docente->id)->pluck('classe_id')->unique();
+
+        $turmas = Turma::whereIn('classe_id', $classeIds)
+            ->with(['classe', 'anoLectivo'])
+            ->get();
+
+        foreach ($turmas as $turma) {
+            $turma->disciplinas_docente = Disciplina::where('docente_id', $docente->id)
+                ->where('classe_id', $turma->classe_id)
+                ->get();
+        }
+
+        return view('docente.turmas', compact('turmas'));
     }
     public function show($id)
     {

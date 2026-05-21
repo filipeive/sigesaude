@@ -89,7 +89,7 @@
             <div class="small-box bg-gradient-success">
                 <div class="inner">
                     <h3>{{ $disciplinas->sum(function($d) { 
-                        return $d->inscricaoDisciplinas()->count(); 
+                        return \App\Models\Estudante::whereHas('turma', fn($q) => $q->where('classe_id', $d->classe_id))->where('status', 'Ativo')->count(); 
                     }) }}</h3>
                     <p>Total de Estudantes</p>
                 </div>
@@ -219,19 +219,17 @@
                     <tbody>
                         @foreach ($disciplinas as $index => $disciplina)
                             @php
-                                $totalEstudantes = $disciplina->inscricaoDisciplinas()->count();
-                                $avaliadosCount = $disciplina->inscricaoDisciplinas()
-                                    ->whereHas('notasFrequencia', function($q) {
-                                        $q->whereNotNull('nota');
-                                    })->count();
+                                $totalEstudantes = \App\Models\Estudante::whereHas('turma', fn($q) => $q->where('classe_id', $disciplina->classe_id))->where('status', 'Ativo')->count();
+                                
+                                $anoAtivoId = \App\Models\AnoLectivo::where('status', 'Ativo')->value('id');
+                                $avaliadosCount = \App\Models\NotaFrequencia::where('disciplina_id', $disciplina->id)
+                                    ->where('ano_lectivo_id', $anoAtivoId)
+                                    ->distinct('estudante_id')->count('estudante_id');
                                 
                                 $progressoPct = $totalEstudantes > 0 ? 
                                     round(($avaliadosCount / $totalEstudantes) * 100) : 0;
                                 
-                                $pendentes = $disciplina->inscricaoDisciplinas()
-                                    ->whereHas('notasFrequencia', function($q) {
-                                        $q->where('status', 'Pendente');
-                                    })->count();
+                                $pendentes = $totalEstudantes - $avaliadosCount;
                                 
                                 $statusClass = $pendentes > 0 ? 'warning' : 'success';
                                 $statusText = $pendentes > 0 ? 'Avaliações Pendentes' : 'Em Dia';

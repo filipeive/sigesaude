@@ -41,11 +41,16 @@
                             <select name="destinatarios[]" class="form-control select2" multiple required>
                                 @foreach($disciplinas as $disciplina)
                                     <optgroup label="{{ $disciplina->nome }}">
-                                        @foreach($disciplina->inscricaoDisciplinas as $inscricao)
-                                            @if($inscricao->inscricao && $inscricao->inscricao->estudante)
-                                                <option value="{{ $inscricao->inscricao->estudante->user_id }}">
-                                                    {{ $inscricao->inscricao->estudante->user->name }} 
-                                                    ({{ $inscricao->inscricao->estudante->matricula }})
+                                        @php
+                                            $estudantes = \App\Models\Estudante::whereHas('turma', function($q) use ($disciplina) {
+                                                $q->where('classe_id', $disciplina->classe_id);
+                                            })->where('status', 'Ativo')->with('user')->get();
+                                        @endphp
+                                        @foreach($estudantes as $estudante)
+                                            @if($estudante->user)
+                                                <option value="{{ $estudante->user_id }}">
+                                                    {{ $estudante->user->name }} 
+                                                    ({{ $estudante->matricula }})
                                                 </option>
                                             @endif
                                         @endforeach
