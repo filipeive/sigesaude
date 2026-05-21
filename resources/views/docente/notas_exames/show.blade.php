@@ -226,12 +226,12 @@
                 Informações sobre Cálculo de Notas de Exames
             </div>
             <div class="card-body">
-                <p>O cálculo da média final é feito da seguinte forma:</p>
+                <p>O cálculo da média final segue o Sistema Nacional de Educação (SNE) de Moçambique:</p>
                 <ul>
-                    <li><strong>Média Final:</strong> 50% da nota de frequência + 50% da melhor nota de exame (normal ou recorrência)</li>
-                    <li><strong>Critério de Aprovação:</strong> Média final igual ou superior a 10 valores</li>
-                    <li><strong>Estudantes Dispensados:</strong> Automaticamente aprovados com a nota de frequência</li>
-                    <li><strong>Estudantes Excluídos:</strong> Automaticamente reprovados com a nota de frequência</li>
+                    <li><strong>Média Final (CF):</strong> 60% da Média de Frequência (MF) + 40% da nota de exame (normal ou recorrência)</li>
+                    <li><strong>Critério de Aprovação:</strong> Média final (CF) igual ou superior a 10 valores</li>
+                    <li><strong>Estudantes Dispensados:</strong> Dispensados de exame (aprovados directamente se MF &ge; 14)</li>
+                    <li><strong>Estudantes Excluídos:</strong> Excluídos do exame (reprovados directamente se MF &lt; 10)</li>
                 </ul>
             </div>
         </div>

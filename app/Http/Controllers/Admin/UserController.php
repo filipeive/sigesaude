@@ -100,8 +100,42 @@ class UserController extends Controller
 
             $user->save();
 
-            return redirect()->route('users.index')
-                ->with('success', 'Usuário criado com sucesso!');
+            // Auto-create profile if tipo is estudante or docente
+            if ($user->tipo === 'estudante') {
+                $anoAtivo = \App\Models\AnoLectivo::where('status', 'Ativo')->first() ?? \App\Models\AnoLectivo::first();
+                $turma = \App\Models\Turma::first();
+                \App\Models\Estudante::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'matricula' => 'EST' . str_pad($user->id, 5, '0', STR_PAD_LEFT),
+                        'turma_id' => $turma?->id,
+                        'ano_lectivo_id' => $anoAtivo?->id,
+                        'data_nascimento' => now()->subYears(15)->format('Y-m-d'),
+                        'genero' => $user->genero ?? 'Masculino',
+                        'ano_ingresso' => date('Y'),
+                        'turno' => 'Diurno',
+                        'status' => 'Ativo',
+                        'contato_emergencia' => 'N/A'
+                    ]
+                );
+            } elseif ($user->tipo === 'docente') {
+                $dept = \App\Models\Departamento::first();
+                if (!$dept) {
+                    $dept = \App\Models\Departamento::create(['nome' => 'Geral', 'codigo' => 'GER']);
+                }
+                \App\Models\Docente::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'departamento_id' => $dept->id,
+                        'formacao' => 'Licenciatura',
+                        'anos_experiencia' => 1,
+                        'status' => 'Ativo'
+                    ]
+                );
+            }
+
+            return redirect()->route('admin.users.index')
+                 ->with('success', 'Usuário criado com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erro ao criar usuário: ' . $e->getMessage())
@@ -131,7 +165,7 @@ class UserController extends Controller
         if($user){
         return view('admin.users.edit', compact('user'));
         } else {
-            return redirect()->route('users.index')->with('deleted', 'Usuário não encontrado.');
+            return redirect()->route('admin.users.index')->with('deleted', 'Usuário não encontrado.');
         }
     }
 
@@ -183,8 +217,42 @@ class UserController extends Controller
 
             $user->save();
 
-            return redirect()->route('users.index')
-                ->with('success', 'Usuário atualizado com sucesso!');
+            // Auto-create/update profile if tipo is estudante or docente
+            if ($user->tipo === 'estudante') {
+                $anoAtivo = \App\Models\AnoLectivo::where('status', 'Ativo')->first() ?? \App\Models\AnoLectivo::first();
+                $turma = \App\Models\Turma::first();
+                \App\Models\Estudante::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'matricula' => 'EST' . str_pad($user->id, 5, '0', STR_PAD_LEFT),
+                        'turma_id' => $turma?->id,
+                        'ano_lectivo_id' => $anoAtivo?->id,
+                        'data_nascimento' => now()->subYears(15)->format('Y-m-d'),
+                        'genero' => $user->genero ?? 'Masculino',
+                        'ano_ingresso' => date('Y'),
+                        'turno' => 'Diurno',
+                        'status' => 'Ativo',
+                        'contato_emergencia' => 'N/A'
+                    ]
+                );
+            } elseif ($user->tipo === 'docente') {
+                $dept = \App\Models\Departamento::first();
+                if (!$dept) {
+                    $dept = \App\Models\Departamento::create(['nome' => 'Geral', 'codigo' => 'GER']);
+                }
+                \App\Models\Docente::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'departamento_id' => $dept->id,
+                        'formacao' => 'Licenciatura',
+                        'anos_experiencia' => 1,
+                        'status' => 'Ativo'
+                    ]
+                );
+            }
+
+            return redirect()->route('admin.users.index')
+                 ->with('success', 'Usuário atualizado com sucesso!');
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Erro ao atualizar usuário: ' . $e->getMessage())
@@ -199,12 +267,12 @@ class UserController extends Controller
         $loggedId = intval(Auth::id()); //
 
         if($loggedId == $id){
-            return redirect()->route('users.index')->with('error', 'Você não pode excluir seu próprio cadastro.');   
+            return redirect()->route('admin.users.index')->with('error', 'Você não pode excluir seu próprio cadastro.');   
         } else {
             $user = User::find($id);
             $user->delete(); 
         }
         // Redirecionar para a lista de usuários
-        return redirect()->route('users.index')->with('deleted', 'Usuário excluído com sucesso!');
+        return redirect()->route('admin.users.index')->with('deleted', 'Usuário excluído com sucesso!');
     }
 }

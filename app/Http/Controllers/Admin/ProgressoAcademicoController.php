@@ -45,7 +45,7 @@ class ProgressoAcademicoController extends Controller
             ->when($anoId, fn ($q) => $q->where('ano_lectivo_id', $anoId))
             ->count();
         $totalAprovados = MediaFinal::when($anoId, fn ($q) => $q->where('ano_lectivo_id', $anoId))
-            ->where('resultado', 'Aprovado')->distinct('estudante_id')->count('estudante_id');
+            ->whereIn('status', ['Aprovado', 'Dispensado'])->distinct('estudante_id')->count('estudante_id');
         $totalReprovados = $totalAlunos - $totalAprovados;
         $taxaAprovacao = $totalAlunos > 0 ? round(($totalAprovados / $totalAlunos) * 100, 1) : 0;
 
@@ -55,8 +55,8 @@ class ProgressoAcademicoController extends Controller
             ->get()
             ->groupBy('disciplina_id')
             ->map(function ($items) {
-                $avg = $items->avg('media_final');
-                $aprov = $items->where('resultado', 'Aprovado')->count();
+                $avg = $items->avg('media');
+                $aprov = $items->whereIn('status', ['Aprovado', 'Dispensado'])->count();
 
                 return [
                     'disciplina' => $items->first()?->disciplina?->nome ?? '—',
@@ -70,30 +70,30 @@ class ProgressoAcademicoController extends Controller
         // ---------- ALUNOS COM BAIXO DESEMPENHO ----------
         $alunosBaixoDesempenho = Estudante::with(['user', 'turma.classe'])
             ->when($anoId, fn ($q) => $q->where('ano_lectivo_id', $anoId))
-            ->whereHas('mediaFinais', fn ($q) => $q->where('ano_lectivo_id', $anoId)->where('resultado', 'Reprovado'))
+            ->whereHas('mediaFinais', fn ($q) => $q->where('ano_lectivo_id', $anoId)->where('status', 'Reprovado'))
             ->limit(10)
             ->get()
             ->map(function ($e) use ($anoId) {
                 $medias = $e->mediaFinais()->where('ano_lectivo_id', $anoId)->get();
-                $pior = $medias->sortBy('media_final')->first();
+                $pior = $medias->sortBy('media')->first();
 
                 return (object) [
                     'aluno' => $e->user->name ?? 'N/A',
                     'turma' => $e->turma ? "{$e->turma->classe->nome} {$e->turma->nome}" : 'N/A',
                     'pior_disc' => $pior?->disciplina?->nome ?? '—',
-                    'pior_media' => $pior?->media_final ?? 0,
-                    'reprovacoes' => $medias->where('resultado', 'Reprovado')->count(),
+                    'pior_media' => $pior?->media ?? 0,
+                    'reprovacoes' => $medias->where('status', 'Reprovado')->count(),
                 ];
             });
 
         // ---------- MELHORES ALUNOS (Top 10 por média geral) ----------
         $topAlunos = DB::table('estudantes')
             ->join('users', 'estudantes.user_id', '=', 'users.id')
-            ->leftJoin('medias_finais', function ($join) use ($anoId) {
-                $join->on('estudantes.id', '=', 'medias_finais.estudante_id')
-                    ->where('medias_finais.ano_lectivo_id', '=', $anoId);
+            ->leftJoin('media_finals', function ($join) use ($anoId) {
+                $join->on('estudantes.id', '=', 'media_finals.estudante_id')
+                    ->where('media_finals.ano_lectivo_id', '=', $anoId);
             })
-            ->select('estudantes.id', 'users.name', 'estudantes.matricula', DB::raw('AVG(medias_finais.media_final) as media_geral'))
+            ->select('estudantes.id', 'users.name', 'estudantes.matricula', DB::raw('AVG(media_finals.media) as media_geral'))
             ->when($anoId, fn ($q) => $q->where('estudantes.ano_lectivo_id', $anoId))
             ->groupBy('estudantes.id', 'users.name', 'estudantes.matricula')
             ->orderByDesc('media_geral')
@@ -109,9 +109,9 @@ class ProgressoAcademicoController extends Controller
             $desempenhoPorTurma[] = [
                 'turma' => "{$t->classe->nome} {$t->nome}",
                 'total_alunos' => $t->estudantes_count,
-                'media_geral' => $medias->count() > 0 ? round($medias->avg('media_final'), 2) : 0,
-                'aprovados' => $medias->where('resultado', 'Aprovado')->count(),
-                'reprovados' => $medias->where('resultado', 'Reprovado')->count(),
+                'media_geral' => $medias->count() > 0 ? round($medias->avg('media'), 2) : 0,
+                'aprovados' => $medias->whereIn('status', ['Aprovado', 'Dispensado'])->count(),
+                'reprovados' => $medias->where('status', 'Reprovado')->count(),
             ];
         }
 
@@ -150,10 +150,10 @@ class ProgressoAcademicoController extends Controller
                     ->where('disciplina_id', $d->id)
                     ->where('ano_lectivo_id', $anoId)
                     ->first();
-                $matriz[$aluno->id]['medias'][$d->id] = $mf?->media_final ?? null;
-                if (! is_null($mf?->media_final)) {
-                    $soma += $mf->media_final;
-                    if ($mf->resultado === 'Reprovado') {
+                $matriz[$aluno->id]['medias'][$d->id] = $mf?->media ?? null;
+                if (! is_null($mf?->media)) {
+                    $soma += $mf->media;
+                    if ($mf->status === 'Reprovado') {
                         $matriz[$aluno->id]['reprovacoes']++;
                     }
                 }
@@ -189,20 +189,19 @@ class ProgressoAcademicoController extends Controller
                     $nf = $a->notasFrequencia->first();
                     $ne = $a->notasExame->first();
                     $mf = $a->mediaFinais->first();
-                    $media = $mf?->media_final ?? round((($nf?->nota ?? 0) + ($ne?->nota ?? 0)) / 2, 2);
 
                     return (object) [
                         'id' => $a->id,
                         'nome' => $a->user->name ?? 'N/A',
                         'matricula' => $a->matricula,
-                        'frequencia' => $nf?->nota ?? null,
+                        'frequencia' => $nf?->media_trimestral ?? null,
                         'exame' => $ne?->nota ?? null,
-                        'media_final' => $media,
-                        'resultado' => $mf?->resultado ?? ($media >= 10 ? 'Aprovado' : 'Reprovado'),
+                        'media_final' => $mf?->media ?? null,
+                        'resultado' => $mf?->status ?? ($mf?->media >= 10 ? 'Aprovado' : 'Reprovado'),
                     ];
                 })
             : collect();
 
-        return view('admin.progresso_academico.disciplina', compact('disciplina', 'turmas', 'turmaSelecionada', 'alunos', 'anoId', 'anoId'));
+        return view('admin.progresso_academico.disciplina', compact('disciplina', 'turmas', 'turmaSelecionada', 'alunos', 'anoId'));
     }
 }

@@ -8,7 +8,7 @@
             <h1 class="m-0 text-dark">Novo Usuário</h1>
             <ol class="breadcrumb mt-2">
                 <li class="breadcrumb-item"><a href="{{ url('/painel') }}"><i class="fas fa-home"></i> Home</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Usuários</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuários</a></li>
                 <li class="breadcrumb-item active">Novo Usuário</li>
             </ol>
         </div>
@@ -33,7 +33,7 @@
             <h3 class="card-title"><i class="fas fa-user-plus mr-2"></i>Dados do Novo Usuário</h3>
         </div>
         
-        <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('admin.users.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="card-body">
                 <div class="row">
@@ -110,7 +110,7 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save mr-1"></i>Cadastrar
                 </button>
-                <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left mr-1"></i>Voltar
                 </a>
             </div>

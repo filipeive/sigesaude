@@ -21,14 +21,9 @@ SET time_zone = "+00:00";
 -- Database: `institudo_db`
 --
 
-DELIMITER $$
---
--- Procedures
---
-CREATE DEFINER=`root`@`localhost` PROCEDURE `DescribeAllTables` ()   BEGIN
-    DECLARE done INT DEFAULT FALSE$$
 
-DELIMITER ;
+
+
 
 -- --------------------------------------------------------
 

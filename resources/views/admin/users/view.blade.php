@@ -8,12 +8,12 @@
             <h1 class="m-0 text-dark">Detalhes do Usuário</h1>
             <ol class="breadcrumb mt-2">
                 <li class="breadcrumb-item"><a href="{{ url('/painel') }}"><i class="fas fa-home"></i> Home</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Usuários</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuários</a></li>
                 <li class="breadcrumb-item active">Detalhes do Usuário</li>
             </ol>
         </div>
         <div>
-            <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning">
+            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning">
                 <i class="fas fa-edit mr-1"></i>Editar Usuário
             </a>
         </div>

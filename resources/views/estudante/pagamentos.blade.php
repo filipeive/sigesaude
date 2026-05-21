@@ -644,8 +644,8 @@
                                     </div>
 
                                     <div class="text-center mt-3">
-                                        <a href="#" class="btn btn-success">
-                                            <i class="fas fa-file-pdf mr-1"></i> Baixar Instruções
+                                        <a href="{{ route('estudante.pagamentos.guia', $propina->id) }}" class="btn btn-success" target="_blank">
+                                            <i class="fas fa-file-pdf mr-1"></i> Baixar Guia (PDF)
                                         </a>
                                     </div>
                                 </div>

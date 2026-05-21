@@ -46,6 +46,10 @@ class Matricula extends Model
     // Gerar referência única (ATM Style - 9 dígitos)
     public static function gerarReferencia()
     {
-        return '922' . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        do {
+            $referencia = '922' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (self::where('referencia', $referencia)->exists());
+
+        return $referencia;
     }
 }

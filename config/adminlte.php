@@ -299,13 +299,7 @@ return [
     */
 
     'menu' => [
-        // Itens de menu comuns (ex.: profile, logout)
-        [
-            'text' => 'Profile',
-            'url' => 'admin/perfil',
-            'icon' => 'fas fa-fw fa-user',
-            'can' => 'auth', // Apenas usuários autenticados podem ver isso
-        ],
+        // Itens de menu comuns
         [
             'text' => 'Logout',
             'url' => 'logout',
@@ -404,9 +398,9 @@ return [
                     'icon' => 'fas fa-fw fa-plus-circle',
                 ],
                 [
-                    'text' => 'Consultar Notas',
-                    'url' => 'admin/notas/ver',
-                    'icon' => 'fas fa-fw fa-search',
+                    'text' => 'Pauta Final Geral',
+                    'url' => 'admin/notas/pauta-final',
+                    'icon' => 'fas fa-fw fa-graduation-cap',
                 ],
             ],
         ],
@@ -525,7 +519,7 @@ return [
                 ],
                 [
                     'text' => 'Exames Finais',
-                    'url' => '/estudante/notas/exame',
+                    'url' => 'estudante/notas/exame',
                     'icon' => 'fas fa-fw fa-file-signature',
                 ],
                 [
@@ -566,6 +560,12 @@ return [
             'text' => 'Ver Disciplinas',
             'url' => 'docente/disciplinas',
             'icon' => 'fas fa-fw fa-book',
+            'can' => 'isDocente',
+        ],
+        [
+            'text' => 'Minhas Turmas',
+            'url' => 'docente/turmas',
+            'icon' => 'fas fa-fw fa-users',
             'can' => 'isDocente',
         ],
         [
@@ -622,15 +622,33 @@ return [
             'can' => 'isSecretaria',
         ],
         [
-            'text' => 'Cadastrar Estudante',
+            'text' => 'Estudantes',
+            'url' => 'secretaria/estudantes',
+            'icon' => 'fas fa-fw fa-users',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Novo Estudante',
             'url' => 'secretaria/estudantes/create',
             'icon' => 'fas fa-fw fa-user-plus',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Pré-Inscrições',
+            'url' => 'secretaria/pre-inscricoes',
+            'icon' => 'fas fa-fw fa-clipboard-list',
             'can' => 'isSecretaria',
         ],
         [
             'text' => 'Matrículas',
             'url' => 'secretaria/matriculas',
             'icon' => 'fas fa-fw fa-graduation-cap',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Nova Matrícula',
+            'url' => 'secretaria/matriculas/create',
+            'icon' => 'fas fa-fw fa-plus-circle',
             'can' => 'isSecretaria',
         ],
         [
@@ -641,6 +659,12 @@ return [
             'text' => 'Pagamentos',
             'url' => 'secretaria/pagamentos',
             'icon' => 'fas fa-fw fa-money-bill',
+            'can' => 'isSecretaria',
+        ],
+        [
+            'text' => 'Novo Pagamento',
+            'url' => 'secretaria/pagamentos/create',
+            'icon' => 'fas fa-fw fa-file-invoice-dollar',
             'can' => 'isSecretaria',
         ],
 
@@ -659,6 +683,12 @@ return [
             'text' => 'Listar Pagamentos',
             'url' => 'financeiro/pagamentos',
             'icon' => 'fas fa-fw fa-money-bill',
+            'can' => 'isFinanceiro',
+        ],
+        [
+            'text' => 'Relatórios',
+            'url' => 'financeiro/relatorios',
+            'icon' => 'fas fa-fw fa-chart-bar',
             'can' => 'isFinanceiro',
         ],
     ],
@@ -743,7 +773,7 @@ return [
             ],
         ],
         'Sweetalert2' => [
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',

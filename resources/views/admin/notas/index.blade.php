@@ -20,13 +20,13 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.notas.index') }}" class="form-inline">
                 <div class="form-group mr-2 mb-2">
-                    <input type="text" name="search" class="form-control" placeholder="Buscar turma..." value="{{ $request->get('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Buscar turma..." value="{{ request()->get('search') }}">
                 </div>
                 <div class="form-group mr-2 mb-2">
                     <select name="classe_id" class="form-control" onchange="this.form.submit()">
                         <option value="">-- Todas as Classes --</option>
                         @foreach($classes as $c)
-                            <option value="{{ $c->id }}" {{ $request->get('classe_id') == $c->id ? 'selected' : '' }}>{{ $c->nome }}</option>
+                            <option value="{{ $c->id }}" {{ request()->get('classe_id') == $c->id ? 'selected' : '' }}>{{ $c->nome }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -34,7 +34,7 @@
                     <select name="ano_lectivo_id" class="form-control" onchange="this.form.submit()">
                         <option value="">-- Todos os Anos --</option>
                         @foreach($anosLectivos as $ano)
-                            <option value="{{ $ano->id }}" {{ $request->get('ano_lectivo_id') == $ano->id ? 'selected' : '' }}>{{ $ano->ano }}</option>
+                            <option value="{{ $ano->id }}" {{ request()->get('ano_lectivo_id') == $ano->id ? 'selected' : '' }}>{{ $ano->ano }}</option>
                         @endforeach
                     </select>
                 </div>

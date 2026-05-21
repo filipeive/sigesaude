@@ -18,7 +18,10 @@ class Pagamento extends Model
         'data_vencimento',
         'descricao',
         'comprovante',
-        'user_id'
+        'user_id',
+        'tipo',
+        'turma_id',
+        'metodo_pagamento',
     ];
 
     public function user()
@@ -43,8 +46,11 @@ class Pagamento extends Model
     // Gerar referência única (ATM Style - 9 dígitos)
     public static function gerarReferencia()
     {
-        // Exemplo: 987 + 6 dígitos aleatórios ou sequenciais
-        return '921' . str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        do {
+            $referencia = '921' . str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (self::where('referencia', $referencia)->exists());
+
+        return $referencia;
     }
     //casts
     protected $casts = [

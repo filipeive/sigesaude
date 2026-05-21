@@ -9,6 +9,7 @@ use App\Models\Docente;
 use App\Models\NotaFrequencia;
 use App\Models\NotaExame;
 use App\Models\MediaFinal;
+use App\Models\ResultadoFinal;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -20,11 +21,11 @@ class NotasExamesController extends Controller
         $docente = Docente::where('user_id', $user->id)->first();
         
         if (!$docente) {
-            return redirect()->route('home')->with('error', 'Perfil de docente não encontrado.');
+            return redirect()->route('docente.dashboard')->with('error', 'Perfil de docente não encontrado.');
         }
 
         $disciplinas = Disciplina::where('docente_id', $docente->id)
-            ->with(['classe', 'nivel'])
+            ->with(['classe'])
             ->get();
 
         $anoLectivo = \App\Models\AnoLectivo::where('status', 'Ativo')->first();
@@ -35,102 +36,26 @@ class NotasExamesController extends Controller
                 $query->where('classe_id', $disciplina->classe_id);
             })->where('status', 'Ativo')->count();
 
-            // Admitidos (Nota de frequência >= 10)
-            $disciplina->admitidos_count = NotaFrequencia::where('disciplina_id', $disciplina->id)
+            // Admitidos (classificacao_final = 'Admitido')
+            $disciplina->admitidos_count = ResultadoFinal::where('disciplina_id', $disciplina->id)
                 ->when($anoLectivo, function($query) use ($anoLectivo) {
                     return $query->where('ano_lectivo_id', $anoLectivo->id);
                 })
-                ->where('nota', '>=', 10)
+                ->where('classificacao_final', 'Admitido')
                 ->count();
 
-            // Excluídos (Nota de frequência < 10)
-            $disciplina->excluidos_count = NotaFrequencia::where('disciplina_id', $disciplina->id)
+            // Excluídos (classificacao_final = 'Excluído')
+            $disciplina->excluidos_count = ResultadoFinal::where('disciplina_id', $disciplina->id)
                 ->when($anoLectivo, function($query) use ($anoLectivo) {
                     return $query->where('ano_lectivo_id', $anoLectivo->id);
                 })
-                ->where('nota', '<', 10)
+                ->where('classificacao_final', 'Excluído')
                 ->count();
         }
         
         return view('docente.notas_exames.index', compact('disciplinas'));
     }
     
-    /* public function show($disciplinaId)
-    {
-        $disciplina = Disciplina::findOrFail($disciplinaId);
-        
-        // Verificar se o docente está autorizado a ver esta disciplina
-        $user = Auth::user();
-        $docente = Docente::where('user_id', $user->id)->first();
-        
-        if ($disciplina->docente_id != $docente->id) {
-            return redirect()->route('docente.notas_exames.index')
-                ->with('error', 'Você não está autorizado a acessar esta disciplina.');
-        }
-        
-        // Obter ano letivo atual
-        $anoLectivoAtual = \App\Models\AnoLectivo::where('status', 'Ativo')->first();
-        
-        if (!$anoLectivoAtual) {
-            return redirect()->route('docente.notas_exames.index')
-                ->with('warning', 'Não há ano letivo ativo no momento.');
-        }
-        
-        try {
-            // Obter estudantes admitidos para exame nesta disciplina
-            $notasFrequencia = NotaFrequencia::where('disciplina_id', $disciplinaId)
-                ->where('status', 'Admitido')
-                ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                ->with(['estudante.user', 'estudante.matriculas'])
-                ->get();
-            
-            $estudantes = [];
-            
-            foreach ($notasFrequencia as $notaFrequencia) {
-                if (!$notaFrequencia->estudante) {
-                    continue;
-                }
-                
-                // Buscar notas de exame do estudante para esta disciplina
-                $notaExameNormal = NotaExame::where('estudante_id', $notaFrequencia->estudante_id)
-                    ->where('disciplina_id', $disciplinaId)
-                    ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                    ->where('tipo_exame', 'Normal')
-                    ->first();
-                    
-                $notaExameRecorrencia = NotaExame::where('estudante_id', $notaFrequencia->estudante_id)
-                    ->where('disciplina_id', $disciplinaId)
-                    ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                    ->where('tipo_exame', 'Recorrência')
-                    ->first();
-                
-                // Buscar média final
-                $mediaFinal = MediaFinal::where('estudante_id', $notaFrequencia->estudante_id)
-                    ->where('disciplina_id', $disciplinaId)
-                    ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                    ->first();
-                
-                $estudantes[] = [
-                    'estudante' => $notaFrequencia->estudante,
-                    'nota_frequencia' => $notaFrequencia->nota,
-                    'nota_exame_normal' => $notaExameNormal ? $notaExameNormal->nota : null,
-                    'nota_exame_recorrencia' => $notaExameRecorrencia ? $notaExameRecorrencia->nota : null,
-                    'media_final' => $mediaFinal ? $mediaFinal->media : null,
-                    'status' => $mediaFinal ? $mediaFinal->status : 'Reprovado',
-                ];
-            }
-            
-            // Log para debug
-            \Illuminate\Support\Facades\Log::info('Estudantes encontrados: ' . count($estudantes));
-            
-            return view('docente.notas_exames.show', compact('disciplina', 'estudantes', 'anoLectivoAtual'));
-            
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Erro ao buscar estudantes para exame: ' . $e->getMessage());
-            return redirect()->route('docente.notas_exames.index')
-                ->with('error', 'Erro ao carregar estudantes: ' . $e->getMessage());
-        }
-    } */
     public function show($disciplinaId)
     {
         $disciplina = Disciplina::findOrFail($disciplinaId);
@@ -153,25 +78,25 @@ class NotasExamesController extends Controller
         }
         
         try {
-            // Obter estudantes admitidos para exame nesta disciplina
-            $notasFrequenciaAdmitidos = NotaFrequencia::where('disciplina_id', $disciplinaId)
-                ->where('status', 'Admitido')
+            // Obter estudantes admitidos para exame nesta disciplina (de acordo com resultados_finais)
+            $resultadosAdmitidos = ResultadoFinal::where('disciplina_id', $disciplinaId)
+                ->where('classificacao_final', 'Admitido')
                 ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                ->with(['estudante.user', 'estudante.matriculas'])
+                ->with(['estudante.user'])
                 ->get();
             
             // Obter estudantes dispensados
-            $notasFrequenciaDispensados = NotaFrequencia::where('disciplina_id', $disciplinaId)
-                ->where('status', 'Dispensado')
+            $resultadosDispensados = ResultadoFinal::where('disciplina_id', $disciplinaId)
+                ->where('classificacao_final', 'Dispensado')
                 ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                ->with(['estudante.user', 'estudante.matriculas'])
+                ->with(['estudante.user'])
                 ->get();
                 
             // Obter estudantes excluídos
-            $notasFrequenciaExcluidos = NotaFrequencia::where('disciplina_id', $disciplinaId)
-                ->where('status', 'Excluído')
+            $resultadosExcluidos = ResultadoFinal::where('disciplina_id', $disciplinaId)
+                ->where('classificacao_final', 'Excluído')
                 ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                ->with(['estudante.user', 'estudante.matriculas'])
+                ->with(['estudante.user'])
                 ->get();
             
             $estudantes = [];
@@ -179,69 +104,57 @@ class NotasExamesController extends Controller
             $estudantesExcluidos = [];
             
             // Processar estudantes admitidos
-            foreach ($notasFrequenciaAdmitidos as $notaFrequencia) {
-                if (!$notaFrequencia->estudante) {
+            foreach ($resultadosAdmitidos as $res) {
+                if (!$res->estudante) {
                     continue;
                 }
                 
                 // Buscar notas de exame do estudante para esta disciplina
-                $notaExameNormal = NotaExame::where('estudante_id', $notaFrequencia->estudante_id)
+                $notaExameNormal = NotaExame::where('estudante_id', $res->estudante_id)
                     ->where('disciplina_id', $disciplinaId)
                     ->where('ano_lectivo_id', $anoLectivoAtual->id)
                     ->where('tipo_exame', 'Normal')
                     ->first();
                     
-                $notaExameRecorrencia = NotaExame::where('estudante_id', $notaFrequencia->estudante_id)
+                $notaExameRecorrencia = NotaExame::where('estudante_id', $res->estudante_id)
                     ->where('disciplina_id', $disciplinaId)
                     ->where('ano_lectivo_id', $anoLectivoAtual->id)
                     ->where('tipo_exame', 'Recorrência')
                     ->first();
                 
-                // Buscar média final
-                $mediaFinal = MediaFinal::where('estudante_id', $notaFrequencia->estudante_id)
-                    ->where('disciplina_id', $disciplinaId)
-                    ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                    ->first();
-                
                 $estudantes[] = [
-                    'estudante' => $notaFrequencia->estudante,
-                    'nota_frequencia' => $notaFrequencia->nota,
+                    'estudante' => $res->estudante,
+                    'nota_frequencia' => $res->media_frequencia,
                     'nota_exame_normal' => $notaExameNormal ? $notaExameNormal->nota : null,
                     'nota_exame_recorrencia' => $notaExameRecorrencia ? $notaExameRecorrencia->nota : null,
-                    'media_final' => $mediaFinal ? $mediaFinal->media : null,
-                    'status' => $mediaFinal ? $mediaFinal->status : 'Reprovado',
+                    'media_final' => $res->media_final,
+                    'status' => $res->classificacao_final,
                 ];
             }
             
             // Processar estudantes dispensados
-            foreach ($notasFrequenciaDispensados as $notaFrequencia) {
-                if (!$notaFrequencia->estudante) {
+            foreach ($resultadosDispensados as $res) {
+                if (!$res->estudante) {
                     continue;
                 }
                 
-                // Buscar média final
-                $mediaFinal = MediaFinal::where('estudante_id', $notaFrequencia->estudante_id)
-                    ->where('disciplina_id', $disciplinaId)
-                    ->where('ano_lectivo_id', $anoLectivoAtual->id)
-                    ->first();
-                
                 $estudantesDispensados[] = [
-                    'estudante' => $notaFrequencia->estudante,
-                    'nota_frequencia' => $notaFrequencia->nota,
-                    'media_final' => $mediaFinal ? $mediaFinal->media : $notaFrequencia->nota,
+                    'estudante' => $res->estudante,
+                    'nota_frequencia' => $res->media_frequencia,
+                    'media_final' => $res->media_final,
                     'status' => 'Dispensado',
                 ];
             }
             
             // Processar estudantes excluídos
-            foreach ($notasFrequenciaExcluidos as $notaFrequencia) {
-                if (!$notaFrequencia->estudante) {
+            foreach ($resultadosExcluidos as $res) {
+                if (!$res->estudante) {
                     continue;
                 }
                 
                 $estudantesExcluidos[] = [
-                    'estudante' => $notaFrequencia->estudante,
-                    'nota_frequencia' => $notaFrequencia->nota,
+                    'estudante' => $res->estudante,
+                    'nota_frequencia' => $res->media_frequencia,
                     'status' => 'Excluído',
                 ];
             }
@@ -260,20 +173,9 @@ class NotasExamesController extends Controller
                 ->with('error', 'Erro ao carregar estudantes: ' . $e->getMessage());
         }
     }
-    /**
-     * Salvar notas de exame
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+
     public function salvar(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('Dados recebidos:', [
-            'disciplina_id' => $request->disciplina_id,
-            'ano_lectivo_id' => $request->ano_lectivo_id,
-            'estudante_id' => $request->estudante_id,
-            'notas' => $request->notas
-        ]);
         $request->validate([
             'disciplina_id' => 'required|exists:disciplinas,id',
             'estudante_id' => 'required|array',
@@ -328,48 +230,14 @@ class NotasExamesController extends Controller
         }
     }
 
-    
     private function calcularMediaFinal($estudanteId, $disciplinaId, $anoLectivoId)
     {
-        // Obter nota de frequência
-        $notaFrequencia = NotaFrequencia::where('estudante_id', $estudanteId)
+        $res = ResultadoFinal::where('estudante_id', $estudanteId)
             ->where('disciplina_id', $disciplinaId)
             ->where('ano_lectivo_id', $anoLectivoId)
             ->first();
         
-        if (!$notaFrequencia) {
-            return;
-        }
-        
-        // Se o estudante foi dispensado, já está aprovado
-        if ($notaFrequencia->status === 'Dispensado') {
-            MediaFinal::updateOrCreate(
-                [
-                    'estudante_id' => $estudanteId,
-                    'disciplina_id' => $disciplinaId,
-                    'ano_lectivo_id' => $anoLectivoId,
-                ],
-                [
-                    'media' => $notaFrequencia->nota,
-                    'status' => 'Aprovado',
-                ]
-            );
-            return;
-        }
-        
-        // Se o estudante foi excluído, já está reprovado
-        if ($notaFrequencia->status === 'Excluído') {
-            MediaFinal::updateOrCreate(
-                [
-                    'estudante_id' => $estudanteId,
-                    'disciplina_id' => $disciplinaId,
-                    'ano_lectivo_id' => $anoLectivoId,
-                ],
-                [
-                    'media' => $notaFrequencia->nota,
-                    'status' => 'Reprovado',
-                ]
-            );
+        if (!$res) {
             return;
         }
         
@@ -386,31 +254,36 @@ class NotasExamesController extends Controller
             ->where('tipo_exame', 'Recorrência')
             ->first();
         
-        $notaExame = 0;
-        
-        if ($notaExameRecorrencia) {
+        $notaExame = null;
+        if ($notaExameRecorrencia && $notaExameRecorrencia->nota !== null) {
             $notaExame = $notaExameRecorrencia->nota;
-        } elseif ($notaExameNormal) {
+        } elseif ($notaExameNormal && $notaExameNormal->nota !== null) {
             $notaExame = $notaExameNormal->nota;
         }
         
-        // Calcular média final (50% frequência + 50% exame)
-        $mediaFinal = ($notaFrequencia->nota + $notaExame) / 2;
-        
-        // Determinar status (Aprovado ou Reprovado)
-        $status = $mediaFinal >= 10 ? 'Aprovado' : 'Reprovado';
-        
-        // Salvar ou atualizar a média final
-        MediaFinal::updateOrCreate(
-            [
-                'estudante_id' => $estudanteId,
-                'disciplina_id' => $disciplinaId,
-                'ano_lectivo_id' => $anoLectivoId,
-            ],
-            [
-                'media' => $mediaFinal,
-                'status' => $status,
-            ]
-        );
+        if ($notaExame !== null && $res->media_frequencia !== null) {
+            // Média Final (CF) = MF*0.6 + Exame*0.4
+            $mediaFinal = round($res->media_frequencia * 0.6 + $notaExame * 0.4, 2);
+            $classificacao = $mediaFinal >= 10 ? 'Aprovado' : 'Reprovado';
+            
+            $res->update([
+                'nota_exame' => $notaExame,
+                'media_final' => $mediaFinal,
+                'classificacao_final' => $classificacao
+            ]);
+
+            // Também atualiza a tabela antiga media_finals para manter compatibilidade com outras views
+            MediaFinal::updateOrCreate(
+                [
+                    'estudante_id' => $estudanteId,
+                    'disciplina_id' => $disciplinaId,
+                    'ano_lectivo_id' => $anoLectivoId,
+                ],
+                [
+                    'media' => $mediaFinal,
+                    'status' => $classificacao,
+                ]
+            );
+        }
     }
 }

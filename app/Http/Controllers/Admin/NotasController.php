@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AnoLectivo;
+use App\Models\Classe;
 use App\Models\Disciplina;
 use App\Models\NotaExame;
 use App\Models\NotaFrequencia;
+use App\Models\ResultadoFinal;
 use App\Models\Turma;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -24,9 +26,9 @@ class NotasController extends Controller
         $turmasQuery = Turma::with(['classe', 'anoLectivo', 'estudantes'])
             ->withCount('estudantes')
             ->when($anoAtivo, fn ($q) => $q->where('ano_lectivo_id', $anoAtivo->id))
-            ->when($request->filled('classe_id'), fn ($q, $cid) => $q->where('classe_id', $cid))
-            ->when($request->filled('ano_lectivo_id'), fn ($q, $aid) => $q->where('ano_lectivo_id', $aid))
-            ->when($request->filled('search'), fn ($q, $s) => $q->where('nome', 'like', "%{$s}%"))
+            ->when($request->filled('classe_id'), fn ($q) => $q->where('classe_id', $request->classe_id))
+            ->when($request->filled('ano_lectivo_id'), fn ($q) => $q->where('ano_lectivo_id', $request->ano_lectivo_id))
+            ->when($request->filled('search'), fn ($q) => $q->where('nome', 'like', "%{$request->search}%"))
             ->orderBy('created_at', 'desc');
 
         $turmas = $turmasQuery->paginate(15)->appends($request->all());
@@ -38,15 +40,15 @@ class NotasController extends Controller
     }
 
     /**
-     * Formulário de criação: selecione turma + disciplina + alunos
+     * Formulário de lançamento de notas trimestrais (ACS1, ACS2, ACS3, ACP, ACF)
      */
     public function create(Request $request)
     {
         $turmaId = $request->get('turma_id');
         $anoId = $request->get('ano_lectivo_id');
-        $tipoNota = $request->get('tipo_nota', 'frequencia'); // frequencia | exame | detalhada
+        $trimestre = $request->get('trimestre', 1);
 
-        $turma = $turmaId ? Turma::with(['classe.disciplinas', 'estudantes.user'])->findOrFail($turmaId) : null;
+        $turma = $turmaId ? Turma::with(['classe.disciplinas.docente.user', 'estudantes.user'])->findOrFail($turmaId) : null;
 
         $classes = Classe::orderBy('nivel')->get();
         $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
@@ -54,30 +56,41 @@ class NotasController extends Controller
 
         // Se turma selecionada, carregar disciplinas da classe
         $disciplinas = $turma
-            ? $turma->classe?->disciplinas()->with('docente.user')->get()
+            ? ($turma->classe?->disciplinas()->with('docente.user')->get() ?? collect())
             : collect();
 
-        // Se turma + disciplina selecionadas, carregar alunos com nota atual (ou vazia)
+        // Se turma + disciplina selecionadas, carregar alunos com notas do trimestre
         $alunosComNotas = collect();
         $disciplinaSelecionada = null;
+
         if ($turma && $request->filled('disciplina_id')) {
             $disciplinaSelecionada = Disciplina::with('docente.user')->find($request->disciplina_id);
 
-            $alunosQuery = $turma->estudantes()
-                ->with(['user', 'notasFrequencia', 'notasExame'])
-                ->orderByRaw('(SELECT name FROM users WHERE id = estudante_id) ASC');
+            $alunosComNotas = $turma->estudantes()
+                ->with(['user'])
+                ->orderBy(
+                    \App\Models\User::select('name')
+                        ->whereColumn('users.id', 'estudantes.user_id')
+                        ->limit(1),
+                    'asc'
+                )
+                ->get();
 
-            if ($tipoNota === 'frequencia') {
-                $alunosQuery->with(['notasFrequencia' => fn ($q) => $q->where('disciplina_id', $request->disciplina_id)]);
-            } elseif ($tipoNota === 'exame') {
-                $alunosQuery->with(['notasExame' => fn ($q) => $q->where('disciplina_id', $request->disciplina_id)]);
+            // Attach existing notas for this trimester
+            $notasExistentes = NotaFrequencia::where('disciplina_id', $request->disciplina_id)
+                ->where('ano_lectivo_id', $anoAtivo?->id ?? $anoId)
+                ->where('trimestre', $trimestre)
+                ->whereIn('estudante_id', $alunosComNotas->pluck('id'))
+                ->get()
+                ->keyBy('estudante_id');
+
+            foreach ($alunosComNotas as $aluno) {
+                $aluno->nota_trimestre = $notasExistentes->get($aluno->id);
             }
-
-            $alunosComNotas = $alunosQuery->get();
         }
 
         return view('admin.notas.create', compact(
-            'turma', 'turmaId', 'anoId', 'tipoNota',
+            'turma', 'turmaId', 'anoId', 'trimestre',
             'classes', 'anosLectivos', 'anoAtivo',
             'disciplinas', 'disciplinaSelecionada',
             'alunosComNotas'
@@ -85,179 +98,181 @@ class NotasController extends Controller
     }
 
     /**
-     * Armazena notas de frequência em lote (array studyante_id => nota)
+     * Calcula a Média Trimestral segundo o SNE Moçambique.
+     *
+     * - MAC = média das ACS lançadas (1, 2 ou 3)
+     * - Se ACF presente:  MT = (MAC + ACP + ACF) / 3
+     * - Se ACF ausente:   MT = (MAC + ACP) / 2
+     * - ACP obrigatório para calcular MT
+     */
+    private function calcularMT($acs1, $acs2, $acs3, $acp, $acf): ?float
+    {
+        $acsValues = array_filter([$acs1, $acs2, $acs3], fn ($v) => $v !== null);
+
+        if (count($acsValues) === 0 || $acp === null) {
+            return null;
+        }
+
+        $mac = array_sum($acsValues) / count($acsValues);
+
+        if ($acf !== null) {
+            $mt = ($mac + $acp + $acf) / 3;
+        } else {
+            $mt = ($mac + $acp) / 2;
+        }
+
+        return round($mt, 2);
+    }
+
+    /**
+     * Armazena notas trimestrais em lote (ACS1, ACS2, ACS3, ACP, ACF)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'turma_id' => 'required|exists:turmas,id',
-            'disciplina_id' => 'required|exists:disciplinas,id',
+            'turma_id'       => 'required|exists:turmas,id',
+            'disciplina_id'  => 'required|exists:disciplinas,id',
             'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
-            'tipo_nota' => 'required|in:frequencia,exame,detalhada',
-            'notas' => 'required|array',
+            'trimestre'      => 'required|in:1,2,3',
+            'notas'          => 'required|array',
             'notas.*.estudante_id' => 'required|exists:estudantes,id',
-            'notas.*.nota' => 'nullable|numeric|min:0|max:20',
-            'tipo_exame' => 'nullable|string|max:50',
+            'notas.*.acs1'   => 'nullable|numeric|min:0|max:20',
+            'notas.*.acs2'   => 'nullable|numeric|min:0|max:20',
+            'notas.*.acs3'   => 'nullable|numeric|min:0|max:20',
+            'notas.*.acp'    => 'nullable|numeric|min:0|max:20',
+            'notas.*.acf'    => 'nullable|numeric|min:0|max:20',
+            'notas.*.comportamento' => 'nullable|in:Bom,Razoável,Mau',
+            'notas.*.faltas' => 'nullable|integer|min:0',
         ]);
 
         $turma = Turma::findOrFail($request->turma_id);
         $anoId = $request->ano_lectivo_id;
         $discId = $request->disciplina_id;
-        $tipo = $request->tipo_nota;
+        $trimestre = $request->trimestre;
 
         DB::beginTransaction();
         try {
             foreach ($request->notas as $item) {
                 $estId = $item['estudante_id'];
-                $nota = $item['nota'] ?? null;
 
-                if ($tipo === 'frequencia') {
-                    $status = is_null($nota) ? 'pendente' : 'lançada';
-                    NotaFrequencia::updateOrCreate(
-                        ['estudante_id' => $estId, 'disciplina_id' => $discId, 'ano_lectivo_id' => $anoId],
-                        ['nota' => $nota, 'status' => $status, 'turma_id' => $turma->id]
-                    );
-                } elseif ($tipo === 'exame') {
-                    NotaExame::updateOrCreate(
-                        ['estudante_id' => $estId, 'disciplina_id' => $discId, 'ano_lectivo_id' => $anoId],
-                        ['nota' => $nota, 'tipo_exame' => $request->tipo_exame ?? 'normal', 'turma_id' => $turma->id]
-                    );
-                }
+                $acs1 = isset($item['acs1']) && $item['acs1'] !== '' ? (float) $item['acs1'] : null;
+                $acs2 = isset($item['acs2']) && $item['acs2'] !== '' ? (float) $item['acs2'] : null;
+                $acs3 = isset($item['acs3']) && $item['acs3'] !== '' ? (float) $item['acs3'] : null;
+                $acp  = isset($item['acp']) && $item['acp'] !== '' ? (float) $item['acp'] : null;
+                $acf  = isset($item['acf']) && $item['acf'] !== '' ? (float) $item['acf'] : null;
+
+                $mediaTrimestral = $this->calcularMT($acs1, $acs2, $acs3, $acp, $acf);
+
+                NotaFrequencia::updateOrCreate(
+                    [
+                        'estudante_id'  => $estId,
+                        'disciplina_id' => $discId,
+                        'ano_lectivo_id'=> $anoId,
+                        'trimestre'     => $trimestre,
+                    ],
+                    [
+                        'acs1'              => $acs1,
+                        'acs2'              => $acs2,
+                        'acs3'              => $acs3,
+                        'acp'               => $acp,
+                        'acf'               => $acf,
+                        'comportamento'     => $item['comportamento'] ?? null,
+                        'faltas'            => $item['faltas'] ?? 0,
+                        'media_trimestral'  => $mediaTrimestral,
+                    ]
+                );
             }
 
             DB::commit();
 
             return redirect()
-                ->route('admin.notas.create', array_merge($request->only(['turma_id', 'disciplina_id', 'ano_lectivo_id', 'tipo_nota'])))
-                ->with('success', 'Notas salvas com sucesso!');
+                ->route('admin.notas.create', [
+                    'turma_id'       => $request->turma_id,
+                    'disciplina_id'  => $request->disciplina_id,
+                    'ano_lectivo_id' => $anoId,
+                    'trimestre'      => $trimestre,
+                ])
+                ->with('success', 'Notas do ' . $trimestre . 'º trimestre salvas com sucesso!');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return back()->with('error', 'Erro ao salvar: '.$e->getMessage())->withInput();
+            return back()->with('error', 'Erro ao salvar: ' . $e->getMessage())->withInput();
         }
     }
 
     /**
-     * Detalhes das notas de uma disciplina/turma (página de leitura)
+     * Pauta completa — vista anual de todas as notas de uma turma/disciplina
      */
     public function show(Request $request)
     {
         $turmaId = $request->get('turma_id');
         $anoId = $request->get('ano_lectivo_id');
         $discId = $request->get('disciplina_id');
-        $tipoNota = $request->get('tipo_nota', 'frequencia');
 
-        $turma = $turmaId ? Turma::with(['classe', 'estudantes.user'])->findOrFail($turmaId) : null;
+        $turma = $turmaId ? Turma::with(['classe', 'estudantes.user', 'anoLectivo'])->findOrFail($turmaId) : null;
         $disc = $discId ? Disciplina::with('docente.user')->findOrFail($discId) : null;
         $ano = $anoId ? AnoLectivo::findOrFail($anoId) : null;
 
         $alunos = collect();
-        $medias = collect();
+        $disciplinas = collect();
 
-        if ($turma && $disc) {
+        if ($turma) {
+            $disciplinas = $turma->classe?->disciplinas()->with('docente.user')->get() ?? collect();
+        }
+
+        if ($turma && $disc && $ano) {
             $alunos = $turma->estudantes()
-                ->with(['user', 'notasFrequencia', 'notasExame', 'mediaFinais'])
+                ->with('user')
+                ->orderBy(
+                    \App\Models\User::select('name')
+                        ->whereColumn('users.id', 'estudantes.user_id')
+                        ->limit(1),
+                    'asc'
+                )
                 ->get();
 
-            $medias = \App\Models\MediaFinal::where('disciplina_id', $discId)
-                ->when($anoId, fn ($q) => $q->where('ano_lectivo_id', $anoId))
-                ->get()
-                ->keyBy('estudante_id');
+            // Attach trimester notas for each student
+            foreach ($alunos as $aluno) {
+                $notasTrimestres = NotaFrequencia::where('estudante_id', $aluno->id)
+                    ->where('disciplina_id', $disc->id)
+                    ->where('ano_lectivo_id', $ano->id)
+                    ->get()
+                    ->keyBy('trimestre');
+
+                $aluno->t1 = $notasTrimestres->get(1);
+                $aluno->t2 = $notasTrimestres->get(2);
+                $aluno->t3 = $notasTrimestres->get(3);
+
+                // Get resultado final
+                $aluno->resultado = ResultadoFinal::where('estudante_id', $aluno->id)
+                    ->where('disciplina_id', $disc->id)
+                    ->where('ano_lectivo_id', $ano->id)
+                    ->first();
+
+                // Get nota exame
+                $aluno->exame = NotaExame::where('estudante_id', $aluno->id)
+                    ->where('disciplina_id', $disc->id)
+                    ->where('ano_lectivo_id', $ano->id)
+                    ->first();
+            }
         }
 
         $classes = Classe::orderBy('nivel')->get();
         $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
-        $disciplinas = $turma ? ($turma->classe?->disciplinas ?? collect()) : collect();
 
         return view('admin.notas.show', compact(
-            'turma', 'disc', 'ano', 'alunos', 'medias', 'tipoNota',
+            'turma', 'disc', 'ano', 'alunos',
             'classes', 'anosLectivos', 'disciplinas'
         ));
     }
 
     /**
-     * Lançar/editar Notas Frequência
-     */
-    public function editFrequencia(Request $request)
-    {
-        $request->validate([
-            'turma_id' => 'required|exists:turmas,id',
-            'disciplina_id' => 'required|exists:disciplinas,id',
-            'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
-        ]);
-
-        $turma = Turma::with(['classe.disciplinas', 'estudantes.user'])->findOrFail($request->turma_id);
-        $disciplina = Disciplina::with('docente.user')->findOrFail($request->disciplina_id);
-        $anoLectivo = AnoLectivo::findOrFail($request->ano_lectivo_id);
-
-        $alunos = $turma->estudantes()
-            ->with(['user', 'notasFrequencia' => fn ($q) => $q->where('disciplina_id', $request->disciplina_id)->where('ano_lectivo_id', $request->ano_lectivo_id)])
-            ->get();
-
-        return view('admin.notas.edit_frequencia', compact('turma', 'disciplina', 'anoLectivo', 'alunos'));
-    }
-
-    /**
-     * Atualiza notas de frequência individual
-     */
-    public function updateFrequencia(Request $request, NotaFrequencia $nota)
-    {
-        $request->validate([
-            'nota' => 'nullable|numeric|min:0|max:20',
-        ]);
-
-        $nota->update([
-            'nota' => $request->nota,
-            'status' => is_null($request->nota) ? 'pendente' : 'lançada',
-        ]);
-
-        return back()->with('success', 'Nota de frequência atualizada!');
-    }
-
-    /**
-     * Lançar/editar Notas de Exame
-     */
-    public function editExame(Request $request)
-    {
-        $request->validate([
-            'turma_id' => 'required|exists:turmas,id',
-            'disciplina_id' => 'required|exists:disciplinas,id',
-            'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
-        ]);
-
-        $turma = Turma::with(['classe.disciplinas', 'estudantes.user'])->findOrFail($request->turma_id);
-        $disciplina = Disciplina::with('docente.user')->findOrFail($request->disciplina_id);
-        $anoLectivo = AnoLectivo::findOrFail($request->ano_lectivo_id);
-
-        $alunos = $turma->estudantes()
-            ->with(['user', 'notasExame' => fn ($q) => $q->where('disciplina_id', $request->disciplina_id)->where('ano_lectivo_id', $request->ano_lectivo_id)])
-            ->get();
-
-        return view('admin.notas.edit_exame', compact('turma', 'disciplina', 'anoLectivo', 'alunos'));
-    }
-
-    /**
-     * Atualiza nota de exame individual
-     */
-    public function updateExame(Request $request, NotaExame $nota)
-    {
-        $request->validate([
-            'nota' => 'required|numeric|min:0|max:20',
-        ]);
-
-        $nota->update(['nota' => $request->nota]);
-
-        return back()->with('success', 'Nota de exame atualizada!');
-    }
-
-    /**
-     * Calcula e salva médias finais
+     * Calcula resultados finais anuais (MT1+MT2+MT3)/3 → MF → Classificação
      */
     public function calcularMedias(Request $request)
     {
         $request->validate([
-            'turma_id' => 'required|exists:turmas,id',
-            'disciplina_id' => 'required|exists:disciplinas,id',
+            'turma_id'       => 'required|exists:turmas,id',
+            'disciplina_id'  => 'required|exists:disciplinas,id',
             'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
         ]);
 
@@ -265,89 +280,232 @@ class NotasController extends Controller
         $discId = $request->disciplina_id;
         $anoId = $request->ano_lectivo_id;
 
-        $alunos = $turma->estudantes()->pluck('id');
+        $alunos = $turma->estudantes()->pluck('estudantes.id');
         $criadas = 0;
 
         foreach ($alunos as $estId) {
-            $notaFreq = NotaFrequencia::where('estudante_id', $estId)
+            // Get 3 trimester medias
+            $notasTrimestres = NotaFrequencia::where('estudante_id', $estId)
+                ->where('disciplina_id', $discId)
+                ->where('ano_lectivo_id', $anoId)
+                ->get()
+                ->keyBy('trimestre');
+
+            $mt1 = $notasTrimestres->get(1)?->media_trimestral;
+            $mt2 = $notasTrimestres->get(2)?->media_trimestral;
+            $mt3 = $notasTrimestres->get(3)?->media_trimestral;
+
+            // Media de Frequência = média das MTs disponíveis (idealmente 3)
+            $mediaFrequencia = null;
+            $mts = array_filter([$mt1, $mt2, $mt3], fn ($v) => $v !== null);
+            if (count($mts) > 0) {
+                $mediaFrequencia = round(array_sum($mts) / count($mts), 2);
+            }
+
+            // Get exame if exists
+            $notaExame = NotaExame::where('estudante_id', $estId)
                 ->where('disciplina_id', $discId)
                 ->where('ano_lectivo_id', $anoId)
                 ->first();
 
-            $notaExam = NotaExame::where('estudante_id', $estId)
-                ->where('disciplina_id', $discId)
-                ->where('ano_lectivo_id', $anoId)
-                ->first();
+            // Classificação SNE:
+            // MF >= 14 → Dispensado (não faz exame)
+            // MF >= 10 e < 14 → Admitido (faz exame)
+            //   CF = MF*0.6 + Exame*0.4 → >= 10 → Aprovado, < 10 → Reprovado
+            // MF < 10 → Excluído (reprovado)
+            $classificacao = null;
+            $mediaFinal = null;
 
-            $mediaFreq = $notaFreq?->nota ?? 0;
-            $mediaExam = $notaExam?->nota ?? 0;
-            $mediaFinal = round(($mediaFreq + $mediaExam) / 2, 2);
+            if ($mediaFrequencia !== null) {
+                if ($mediaFrequencia >= 14) {
+                    $classificacao = 'Dispensado';
+                    $mediaFinal = $mediaFrequencia;
+                } elseif ($mediaFrequencia >= 10) {
+                    $classificacao = 'Admitido';
+                    if ($notaExame && $notaExame->nota !== null) {
+                        $mediaFinal = round($mediaFrequencia * 0.6 + $notaExame->nota * 0.4, 2);
+                        $classificacao = $mediaFinal >= 10 ? 'Aprovado' : 'Reprovado';
+                    }
+                } else {
+                    $classificacao = 'Excluído';
+                    $mediaFinal = $mediaFrequencia;
+                }
+            }
 
-            $resultado = $mediaFinal >= 10 ? 'Aprovado' : 'Reprovado';
-
-            MediaFinal::updateOrCreate(
+            ResultadoFinal::updateOrCreate(
                 ['estudante_id' => $estId, 'disciplina_id' => $discId, 'ano_lectivo_id' => $anoId],
                 [
-                    'media_frequencia' => $mediaFreq,
-                    'media_exame' => $mediaExam,
-                    'media_final' => $mediaFinal,
-                    'resultado' => $resultado,
-                    'turma_id' => $turma->id,
+                    'mt1'                => $mt1,
+                    'mt2'                => $mt2,
+                    'mt3'                => $mt3,
+                    'media_frequencia'   => $mediaFrequencia,
+                    'nota_exame'         => $notaExame?->nota,
+                    'media_final'        => $mediaFinal,
+                    'classificacao_final'=> $classificacao,
                 ]
             );
+
+            // Também atualiza a tabela media_finals para manter estatísticas legadas
+            if ($classificacao !== null) {
+                $statusFinal = null;
+                if ($classificacao == 'Dispensado') {
+                    $statusFinal = 'Dispensado';
+                } elseif ($classificacao == 'Aprovado') {
+                    $statusFinal = 'Aprovado';
+                } elseif (in_array($classificacao, ['Excluído', 'Reprovado'])) {
+                    $statusFinal = 'Reprovado';
+                }
+
+                if ($statusFinal !== null && $mediaFinal !== null) {
+                    \App\Models\MediaFinal::updateOrCreate(
+                        ['estudante_id' => $estId, 'disciplina_id' => $discId, 'ano_lectivo_id' => $anoId],
+                        [
+                            'media' => $mediaFinal,
+                            'status' => $statusFinal,
+                        ]
+                    );
+                }
+            }
+
             $criadas++;
         }
 
-        return back()->with('success', "Médias calculadas para {$criadas} estudantes!");
+        return back()->with('success', "Resultados finais calculados para {$criadas} estudantes!");
     }
 
     /**
-     * Gera PDF do boletim por turma/disciplina
+     * Pauta Final — mostra TODAS as disciplinas de uma turma com resultados de cada aluno.
+     * Permite ver se o aluno passou ou reprovou no geral.
      */
-    public function pdfBoletim(Request $request)
+    public function pautaFinal(Request $request)
+    {
+        $turmaId = $request->get('turma_id');
+        $anoId = $request->get('ano_lectivo_id');
+
+        $anoAtivo = AnoLectivo::where('status', 'Ativo')->first();
+        $ano = $anoId ? AnoLectivo::find($anoId) : $anoAtivo;
+        $turma = $turmaId ? Turma::with(['classe', 'anoLectivo'])->find($turmaId) : null;
+
+        $turmas = Turma::with(['classe'])
+            ->when($ano, fn ($q) => $q->where('ano_lectivo_id', $ano->id))
+            ->orderBy('nome')
+            ->get();
+
+        $anosLectivos = AnoLectivo::orderByDesc('ano')->get();
+        $alunos = collect();
+        $disciplinas = collect();
+
+        if ($turma && $ano) {
+            $disciplinas = $turma->classe?->disciplinas()->orderBy('nome')->get() ?? collect();
+
+            $alunos = $turma->estudantes()
+                ->with('user')
+                ->orderBy(
+                    \App\Models\User::select('name')
+                        ->whereColumn('users.id', 'estudantes.user_id')
+                        ->limit(1),
+                    'asc'
+                )
+                ->get();
+
+            foreach ($alunos as $aluno) {
+                $resultados = ResultadoFinal::where('estudante_id', $aluno->id)
+                    ->where('ano_lectivo_id', $ano->id)
+                    ->whereIn('disciplina_id', $disciplinas->pluck('id'))
+                    ->get()
+                    ->keyBy('disciplina_id');
+
+                $aluno->resultados = $resultados;
+
+                // Calcular se o aluno passou no geral
+                // Regra: Passa se não tem nenhuma disciplina Excluído/Reprovado
+                $totalDisc = $disciplinas->count();
+                $aprovadas = 0;
+                $reprovadas = 0;
+                $pendentes = 0;
+
+                foreach ($disciplinas as $d) {
+                    $res = $resultados->get($d->id);
+                    if (!$res || !$res->classificacao_final) {
+                        $pendentes++;
+                    } elseif (in_array($res->classificacao_final, ['Dispensado', 'Aprovado'])) {
+                        $aprovadas++;
+                    } else {
+                        $reprovadas++;
+                    }
+                }
+
+                $aluno->total_aprovadas = $aprovadas;
+                $aluno->total_reprovadas = $reprovadas;
+                $aluno->total_pendentes = $pendentes;
+
+                // Decisão final: aprovado se tem 0 reprovações e 0 pendentes
+                if ($pendentes > 0) {
+                    $aluno->decisao_final = 'Pendente';
+                } elseif ($reprovadas == 0) {
+                    $aluno->decisao_final = 'Transitou';
+                } else {
+                    $aluno->decisao_final = 'Não Transitou';
+                }
+            }
+        }
+
+        return view('admin.notas.pauta_final', compact(
+            'turma', 'ano', 'turmas', 'anosLectivos',
+            'alunos', 'disciplinas'
+        ));
+    }
+
+    /**
+     * Gera PDF da Pauta por turma/disciplina
+     */
+    public function pdfPauta(Request $request)
     {
         $request->validate([
-            'turma_id' => 'required|exists:turmas,id',
-            'disciplina_id' => 'required|exists:disciplinas,id',
+            'turma_id'       => 'required|exists:turmas,id',
+            'disciplina_id'  => 'required|exists:disciplinas,id',
             'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
         ]);
 
-        $turma = Turma::with(['classe', 'estudantes.user', 'anoLectivo'])->findOrFail($request->turma_id);
+        $turma = Turma::with(['classe', 'anoLectivo'])->findOrFail($request->turma_id);
         $disc = Disciplina::with('docente.user')->findOrFail($request->disciplina_id);
         $ano = AnoLectivo::findOrFail($request->ano_lectivo_id);
 
         $alunos = $turma->estudantes()
-            ->with([
-                'user',
-                'notasFrequencia' => fn ($q) => $q->where('disciplina_id', $disc->id)->where('ano_lectivo_id', $ano->id),
-                'notasExame' => fn ($q) => $q->where('disciplina_id', $disc->id)->where('ano_lectivo_id', $ano->id),
-                'mediaFinais' => fn ($q) => $q->where('disciplina_id', $disc->id)->where('ano_lectivo_id', $ano->id),
-            ])
+            ->with('user')
+            ->orderBy(
+                \App\Models\User::select('name')
+                    ->whereColumn('users.id', 'estudantes.user_id')
+                    ->limit(1),
+                'asc'
+            )
             ->get();
 
-        $pdf = Pdf::loadView('pdf.boletim_disciplina', compact('turma', 'disc', 'ano', 'alunos'))
-            ->setPaper('A4', 'portrait');
+        foreach ($alunos as $aluno) {
+            $notasTrimestres = NotaFrequencia::where('estudante_id', $aluno->id)
+                ->where('disciplina_id', $disc->id)
+                ->where('ano_lectivo_id', $ano->id)
+                ->get()
+                ->keyBy('trimestre');
 
-        return $pdf->download("Boletim_{$disc->nome}_{$turma->nome}_{$ano->ano}.pdf");
-    }
+            $aluno->t1 = $notasTrimestres->get(1);
+            $aluno->t2 = $notasTrimestres->get(2);
+            $aluno->t3 = $notasTrimestres->get(3);
 
-    /**
-     * Remove uma nota de frequência
-     */
-    public function destroyFrequencia(NotaFrequencia $notaFrequencia)
-    {
-        $notaFrequencia->delete();
+            $aluno->resultado = ResultadoFinal::where('estudante_id', $aluno->id)
+                ->where('disciplina_id', $disc->id)
+                ->where('ano_lectivo_id', $ano->id)
+                ->first();
 
-        return back()->with('success', 'Nota de frequência removida.');
-    }
+            $aluno->exame = NotaExame::where('estudante_id', $aluno->id)
+                ->where('disciplina_id', $disc->id)
+                ->where('ano_lectivo_id', $ano->id)
+                ->first();
+        }
 
-    /**
-     * Remove uma nota de exame
-     */
-    public function destroyExame(NotaExame $notaExame)
-    {
-        $notaExame->delete();
+        $pdf = Pdf::loadView('pdf.pauta_notas', compact('turma', 'disc', 'ano', 'alunos'))
+            ->setPaper('A4', 'landscape');
 
-        return back()->with('success', 'Nota de exame removida.');
+        return $pdf->download("Pauta_{$disc->nome}_{$turma->nome}_{$ano->ano}.pdf");
     }
 }

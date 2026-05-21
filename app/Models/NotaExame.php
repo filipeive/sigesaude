@@ -28,6 +28,11 @@ class NotaExame extends Model
     {
         return $this->belongsTo(Disciplina::class);
     }
+    public function turma()
+    {
+        return $this->belongsTo(Turma::class);
+    }
+
     public function anoLectivo()
     {
         return $this->belongsTo(AnoLectivo::class, 'ano_lectivo_id');

@@ -179,7 +179,7 @@ class DocenteController extends Controller
         $request->validate([
             'nome' => 'required|string|max:255',
             'descricao' => 'nullable|string',
-            'ano_lectivo_id' => 'required|exists:ano_lectivos,id',
+            'ano_lectivo_id' => 'required|exists:anos_lectivos,id',
         ]);
         
         $disciplina->update($request->all());

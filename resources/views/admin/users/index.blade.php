@@ -11,7 +11,7 @@
                 <li class="breadcrumb-item active">Usuários</li>
             </ol>
         </div>
-        <a href="{{ route('users.create') }}" class="btn btn-primary">
+        <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
             <i class="fas fa-user-plus mr-1"></i> Novo Usuário
         </a>
     </div>
@@ -112,16 +112,16 @@
                                 </td>
                                 <td class="text-right">
                                     <div class="btn-group">
-                                        <a href="{{ route('users.show', $user->id) }}" class="btn btn-info btn-sm"
+                                        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-info btn-sm"
                                             title="Visualizar">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning btn-sm"
+                                        <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm"
                                             title="Editar">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
                                         @if ($loggedId !== intval($user->id))
-                                            <form class="d-inline" action="{{ route('users.destroy', $user->id) }}"
+                                            <form class="d-inline" action="{{ route('admin.users.destroy', $user->id) }}"
                                                 method="POST"
                                                 onsubmit="return confirm('Tem certeza que deseja excluir este usuário?')">
                                                 @csrf
@@ -197,7 +197,7 @@
             const fetchUsers = (query = '') => {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    fetch(`{{ route('users.index') }}?search=${query}`, {
+                    fetch(`{{ route('admin.users.index') }}?search=${query}`, {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
                             }

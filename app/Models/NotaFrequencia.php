@@ -14,8 +14,15 @@ class NotaFrequencia extends Model
         'estudante_id',
         'disciplina_id',
         'ano_lectivo_id',
-        'nota',
-        'status',
+        'trimestre',
+        'acs1',
+        'acs2',
+        'acs3',
+        'acp',
+        'acf',
+        'comportamento',
+        'faltas',
+        'media_trimestral'
     ];
 
     public function estudante()
@@ -42,9 +49,14 @@ class NotaFrequencia extends Model
         return $this->belongsTo(Inscricao::class);
     }
 
+    public function turma()
+    {
+        return $this->belongsTo(Turma::class);
+    }
+
     public function anoLectivo()
     {
         return $this->belongsTo(AnoLectivo::class);
     }
-
 }
+

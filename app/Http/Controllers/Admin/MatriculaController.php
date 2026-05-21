@@ -8,8 +8,9 @@ use App\Models\Estudante;
 use App\Models\Turma;
 use App\Models\AnoLectivo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class MatriculaController extends Controller
 {
@@ -57,16 +58,21 @@ class MatriculaController extends Controller
             $data['status'] = 'Pendente';
         }
 
+        $data['data_matricula'] = $data['data_matricula'] ?? now()->toDateString();
+
         // Gerar referência numérica única (ATM Style)
         $data['referencia'] = Matricula::gerarReferencia();
 
-        Matricula::create($data);
+        DB::transaction(function () use ($data, $request) {
+            Matricula::create($data);
 
-        $estudante = Estudante::find($request->estudante_id);
-        $estudante->update([
-            'turma_id' => $request->turma_id,
-            'status' => $data['status'] == 'Ativo' ? 'Ativo' : $estudante->status
-        ]);
+            $estudante = Estudante::find($request->estudante_id);
+            $estudante->update([
+                'turma_id' => $request->turma_id,
+                'ano_lectivo_id' => $request->ano_lectivo_id,
+                'status' => $data['status'] === 'Ativo' ? 'Ativo' : $estudante->status
+            ]);
+        });
 
         return redirect()->route('admin.matriculas.index')
                          ->with('success', 'Matrícula criada com sucesso!');
@@ -96,13 +102,16 @@ class MatriculaController extends Controller
             'observacoes' => 'nullable|string',
         ]);
 
-        $matricula->update($request->only(['turma_id', 'ano_lectivo_id', 'valor', 'data_matricula', 'observacoes', 'status']));
+        DB::transaction(function () use ($matricula, $request) {
+            $matricula->update($request->only(['turma_id', 'ano_lectivo_id', 'valor', 'data_matricula', 'observacoes', 'status']));
 
-        $estudante = Estudante::find($matricula->estudante_id);
-        $estudante->update([
-            'turma_id' => $request->turma_id,
-            'status' => $request->status == 'Ativo' ? 'Ativo' : $estudante->status
-        ]);
+            $estudante = Estudante::find($matricula->estudante_id);
+            $estudante->update([
+                'turma_id' => $request->turma_id,
+                'ano_lectivo_id' => $request->ano_lectivo_id,
+                'status' => $request->status === 'Ativo' ? 'Ativo' : $estudante->status
+            ]);
+        });
 
         return redirect()->route('admin.matriculas.index')
                          ->with('success', 'Matrícula atualizada com sucesso!');
@@ -110,7 +119,33 @@ class MatriculaController extends Controller
 
     public function destroy(Matricula $matricula)
     {
-        $matricula->delete();
+        DB::transaction(function () use ($matricula) {
+            $estudante = $matricula->estudante;
+            $wasCurrentAcademicPlacement = $estudante
+                && (int) $estudante->turma_id === (int) $matricula->turma_id
+                && (int) $estudante->ano_lectivo_id === (int) $matricula->ano_lectivo_id;
+
+            if ($matricula->comprovativo && Storage::disk('public')->exists($matricula->comprovativo)) {
+                Storage::disk('public')->delete($matricula->comprovativo);
+            }
+
+            $matricula->delete();
+
+            if ($estudante && $wasCurrentAcademicPlacement) {
+                $matriculaAtiva = $estudante->matriculas()
+                    ->where('status', 'Ativo')
+                    ->latest('data_matricula')
+                    ->latest('id')
+                    ->first();
+
+                $estudante->update([
+                    'turma_id' => $matriculaAtiva?->turma_id,
+                    'ano_lectivo_id' => $matriculaAtiva?->ano_lectivo_id,
+                    'status' => $matriculaAtiva ? 'Ativo' : 'Inativo',
+                ]);
+            }
+        });
+
         return redirect()->route('admin.matriculas.index')
                          ->with('success', 'Matrícula removida com sucesso!');
     }

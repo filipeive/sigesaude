@@ -265,4 +265,23 @@ class EstudantePagamentosController extends Controller
         
         return $pdf->download('Recibo_' . $pagamento->referencia . '.pdf');
     }
+
+    /**
+     * Gera a guia de pagamento em PDF para o estudante.
+     */
+    public function downloadGuia(Pagamento $pagamento)
+    {
+        // Verificar se o pagamento pertence ao estudante logado
+        $estudante = Estudante::where('user_id', Auth::id())->first();
+        
+        if (!$estudante || $pagamento->estudante_id !== $estudante->id) {
+            abort(403, 'Acesso não autorizado.');
+        }
+
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo']);
+        
+        $pdf = Pdf::loadView('pdf.guia_pagamento', compact('pagamento'));
+        
+        return $pdf->download('Guia_Pagamento_' . $pagamento->referencia . '.pdf');
+    }
 }

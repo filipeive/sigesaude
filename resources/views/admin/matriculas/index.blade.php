@@ -1,6 +1,7 @@
 @extends('adminlte::page')
 
 @section('title', 'Matrículas')
+@section('plugins.Sweetalert2', true)
 
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -213,6 +214,14 @@
                 e.preventDefault();
                 var form = $(this).closest('form');
                 
+                if (typeof Swal === 'undefined') {
+                    if (confirm('Esta ação não poderá ser revertida. Deseja continuar?')) {
+                        form.submit();
+                    }
+
+                    return;
+                }
+
                 Swal.fire({
                     title: 'Confirmar Exclusão',
                     text: "Esta ação não poderá ser revertida. Deseja continuar?",

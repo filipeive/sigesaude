@@ -20,6 +20,8 @@ use App\Http\Controllers\Estudante\NotasDetalhadasController;
 use App\Http\Controllers\Estudante\NotasExameController;
 use App\Http\Controllers\Estudante\NotasFrequenciaController;
 use App\Http\Controllers\Estudante\PerfilController as PerfilEstudanteController;
+use App\Http\Controllers\Financeiro\FinanceiroController as PortalFinanceiroController;
+use App\Http\Controllers\Secretaria\SecretariaController;
 use Illuminate\Support\Facades\Route;
 
 // Rotas Públicas (Autenticação)
@@ -116,20 +118,16 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
         Route::delete('/{id}', [DisciplinaController::class, 'destroy'])->name('destroy');
     });
 
-    // ── GESTÃO DE NOTAS ────────────────────────────────────────────────────
+    // ── GESTÃO DE NOTAS (SNE Moçambique) ─────────────────────────────────
     Route::prefix('admin/notas')->name('admin.notas.')->group(function () {
         Route::get('/', [NotasController::class, 'index'])->name('index');
         Route::get('/create', [NotasController::class, 'create'])->name('create');
         Route::post('/', [NotasController::class, 'store'])->name('store');
-        Route::get('/ver', [NotasController::class, 'show'])->name('show');
-        Route::get('/frequencia/{id}/edit', [NotasController::class, 'editFrequencia'])->name('edit_frequencia');
-        Route::put('/frequencia/{notaFrequencia}', [NotasController::class, 'updateFrequencia'])->name('update_frequencia');
-        Route::get('/exame/{id}/edit', [NotasController::class, 'editExame'])->name('edit_exame');
-        Route::put('/exame/{notaExame}', [NotasController::class, 'updateExame'])->name('update_exame');
+        Route::get('/pauta', [NotasController::class, 'show'])->name('show');
+        Route::get('/pauta-turma/{turma}', [NotasController::class, 'pautaTurma'])->name('pauta_turma');
         Route::post('/calcular-medias', [NotasController::class, 'calcularMedias'])->name('calcular_medias');
-        Route::get('/boletim', [NotasController::class, 'pdfBoletim'])->name('pdf_boletim');
-        Route::delete('/frequencia/{notaFrequencia}', [NotasController::class, 'destroyFrequencia'])->name('destroy_frequencia');
-        Route::delete('/exame/{notaExame}', [NotasController::class, 'destroyExame'])->name('destroy_exame');
+        Route::get('/pdf-pauta', [NotasController::class, 'pdfPauta'])->name('pdf_pauta');
+        Route::get('/pauta-final', [NotasController::class, 'pautaFinal'])->name('pauta_final');
     });
 
     // ── PROGRESSO ACADÊMICO ────────────────────────────────────────────────
@@ -161,13 +159,14 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
         Route::get('/', [PagamentoController::class, 'index'])->name('index');
         Route::get('/create', [PagamentoController::class, 'create'])->name('create');
         Route::post('/', [PagamentoController::class, 'store'])->name('store');
+        Route::get('/exportar', [PagamentoController::class, 'exportar'])->name('exportar');
         Route::get('/{pagamento}', [PagamentoController::class, 'show'])->name('show');
         Route::get('/{pagamento}/edit', [PagamentoController::class, 'edit'])->name('edit');
         Route::put('/{pagamento}', [PagamentoController::class, 'update'])->name('update');
         Route::delete('/{pagamento}', [PagamentoController::class, 'destroy'])->name('destroy');
         Route::put('/{pagamento}/status', [PagamentoController::class, 'updateStatus'])->name('updateStatus');
-        Route::get('/exportar', [PagamentoController::class, 'exportar'])->name('exportar');
         Route::get('/{pagamento}/recibo', [PagamentoController::class, 'downloadRecibo'])->name('recibo');
+        Route::get('/{pagamento}/guia', [PagamentoController::class, 'downloadGuia'])->name('guia');
     });
 
     // Financeiro
@@ -212,6 +211,41 @@ Route::middleware(['auth', 'check.tipo:admin'])->group(function () {
 });
 
 // ══════════════════════════════════════
+// Rotas para Secretaria
+// ══════════════════════════════════════
+Route::middleware(['auth', 'check.tipo:secretaria'])->prefix('secretaria')->name('secretaria.')->group(function () {
+    Route::get('/dashboard', [SecretariaController::class, 'index'])->name('dashboard');
+    Route::get('/estudantes', [SecretariaController::class, 'estudantes'])->name('estudantes.index');
+    Route::get('/estudantes/create', [SecretariaController::class, 'createEstudante'])->name('estudantes.create');
+    Route::post('/estudantes', [SecretariaController::class, 'storeEstudante'])->name('estudantes.store');
+    Route::get('/estudantes/{estudante}', [SecretariaController::class, 'showEstudante'])->name('estudantes.show');
+    Route::get('/estudantes/{estudante}/edit', [SecretariaController::class, 'editEstudante'])->name('estudantes.edit');
+    Route::put('/estudantes/{estudante}', [SecretariaController::class, 'updateEstudante'])->name('estudantes.update');
+    Route::get('/matriculas', [SecretariaController::class, 'matriculas'])->name('matriculas.index');
+    Route::get('/matriculas/create', [SecretariaController::class, 'createMatricula'])->name('matriculas.create');
+    Route::post('/matriculas', [SecretariaController::class, 'storeMatricula'])->name('matriculas.store');
+    Route::get('/matriculas/{matricula}', [SecretariaController::class, 'showMatricula'])->name('matriculas.show');
+    Route::post('/matriculas/{matricula}/confirmar', [SecretariaController::class, 'confirmarMatricula'])->name('matriculas.confirmar');
+    Route::post('/matriculas/{matricula}/comprovativo', [SecretariaController::class, 'uploadComprovativo'])->name('matriculas.comprovativo');
+    Route::get('/pagamentos', [SecretariaController::class, 'pagamentos'])->name('pagamentos.index');
+    Route::get('/pagamentos/create', [SecretariaController::class, 'createPagamento'])->name('pagamentos.create');
+    Route::post('/pagamentos', [SecretariaController::class, 'storePagamento'])->name('pagamentos.store');
+    Route::get('/pagamentos/{pagamento}', [SecretariaController::class, 'showPagamento'])->name('pagamentos.show');
+    Route::put('/pagamentos/{pagamento}/status', [SecretariaController::class, 'updatePagamentoStatus'])->name('pagamentos.status');
+    Route::get('/pre-inscricoes', [SecretariaController::class, 'preInscricoes'])->name('pre-inscricoes.index');
+    Route::put('/pre-inscricoes/{preInscricao}/status', [SecretariaController::class, 'updatePreInscricaoStatus'])->name('pre-inscricoes.status');
+});
+
+// ══════════════════════════════════════
+// Rotas para Financeiro
+// ══════════════════════════════════════
+Route::middleware(['auth', 'check.tipo:financeiro'])->prefix('financeiro')->name('financeiro.')->group(function () {
+    Route::get('/dashboard', [PortalFinanceiroController::class, 'index'])->name('dashboard');
+    Route::get('/pagamentos', [PortalFinanceiroController::class, 'pagamentos'])->name('pagamentos.index');
+    Route::get('/relatorios', [PortalFinanceiroController::class, 'relatorios'])->name('relatorios.index');
+});
+
+// ══════════════════════════════════════
 // Rotas para Estudantes
 // ══════════════════════════════════════
 Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
@@ -225,6 +259,7 @@ Route::middleware(['auth', 'check.tipo:estudante'])->group(function () {
     Route::get('/estudante/pagamentos/{pagamento}', [EstudantePagamentosController::class, 'show'])->name('estudante.pagamentos.show');
     Route::post('/estudante/pagamentos/registrar', [EstudantePagamentosController::class, 'registrarPagamento'])->name('estudante.registrar.pagamento');
     Route::get('/estudante/pagamentos/{pagamento}/recibo', [EstudantePagamentosController::class, 'downloadRecibo'])->name('estudante.pagamentos.recibo');
+    Route::get('/estudante/pagamentos/{pagamento}/guia', [EstudantePagamentosController::class, 'downloadGuia'])->name('estudante.pagamentos.guia');
 
     Route::prefix('estudante/notas')->group(function () {
         Route::get('/frequencia', [NotasFrequenciaController::class, 'notasFrequencia'])->name('estudante.notas_frequencia.notas');
@@ -248,7 +283,6 @@ Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(func
 
     // Perfil
     Route::get('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'index'])->name('docente.perfil');
-    Route::get('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'index'])->name('docente.perfil.index');
     Route::put('/perfil', [App\Http\Controllers\Docente\PerfilDocenteController::class, 'update'])->name('docente.perfil.update');
     Route::get('/perfil/criar', [App\Http\Controllers\Docente\DocenteController::class, 'createProfile'])->name('docente.profile.create');
     Route::post('/perfil/store', [App\Http\Controllers\Docente\DocenteController::class, 'storeProfile'])->name('docente.profile.store');
@@ -265,6 +299,7 @@ Route::middleware(['auth', 'check.tipo:docente'])->prefix('docente')->group(func
     Route::get('/notas-frequencia', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'index'])->name('docente.notas_frequencia.index');
     Route::get('/notas-frequencia/{disciplina}', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'show'])->name('docente.notas_frequencia.show');
     Route::post('/notas-frequencia/{disciplina}/store', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'store'])->name('docente.notas_frequencia.store');
+    Route::get('/notas-frequencia/{disciplina}/pauta', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'pauta'])->name('docente.notas_frequencia.pauta');
     Route::get('/notas-frequencia/exportar', [App\Http\Controllers\Docente\NotasFrequenciaController::class, 'exportar'])->name('docente.notas_frequencia.export');
 
     // Notas de Exames

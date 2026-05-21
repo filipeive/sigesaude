@@ -249,6 +249,10 @@
                                     <a href="{{ route('admin.pagamentos.recibo', $p) }}" class="btn btn-xs btn-success" title="Recibo PDF" target="_blank">
                                         <i class="fas fa-file-pdf"></i>
                                     </a>
+                                @elseif($p->status == 'pendente')
+                                    <a href="{{ route('admin.pagamentos.guia', $p) }}" class="btn btn-xs btn-warning" title="Guia de Pagamento PDF" target="_blank">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
                                 @endif
                                 <form action="{{ route('admin.pagamentos.destroy', $p) }}" method="POST" class="d-inline"
                                     onsubmit="return confirm('Excluir pagamento {{ $p->referencia }}?');">

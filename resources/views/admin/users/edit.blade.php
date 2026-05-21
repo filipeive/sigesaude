@@ -9,7 +9,7 @@
             <h1 class="m-0 text-dark">Editar Usuário</h1>
             <ol class="breadcrumb mt-2">
                 <li class="breadcrumb-item"><a href="{{ url('/painel') }}"><i class="fas fa-home"></i> Home</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Usuários</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Usuários</a></li>
                 <li class="breadcrumb-item active">Editar Usuário</li>
             </ol>
         </div>
@@ -34,7 +34,7 @@
             <h3 class="card-title"><i class="fas fa-user-edit mr-2"></i>Editar Dados do Usuário</h3>
         </div>
         
-        <form method="POST" action="{{ route('users.update', $user->id) }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('admin.users.update', $user->id) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             <div class="card-body">
@@ -118,7 +118,7 @@
                 <button type="submit" class="btn btn-warning">
                     <i class="fas fa-save mr-1"></i>Atualizar
                 </button>
-                <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left mr-1"></i>Voltar
                 </a>
             </div>

@@ -1,15 +1,14 @@
 @extends('adminlte::page')
 
-@section('title', 'Gerenciamento de Notas - ' . $disciplina->nome)
-
+@section('title', 'Lançamento de Notas - ' . $disciplina->nome)
 
 @section('content')
     <div class="container-fluid px-4">
-        <h1 class="mt-4">Notas e Frequência: {{ $disciplina->nome }}</h1>
+        <h1 class="mt-4">Lançamento de Notas: {{ $disciplina->nome }}</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="{{ route('docente.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('docente.disciplinas') }}">Disciplinas</a></li>
-            <li class="breadcrumb-item active">Notas e Frequência</li>
+            <li class="breadcrumb-item"><a href="{{ route('docente.notas_frequencia.index') }}">Notas</a></li>
+            <li class="breadcrumb-item active">Lançamento Trimestral</li>
         </ol>
 
         @if (session('success'))
@@ -24,169 +23,146 @@
             </div>
         @endif
 
-        @if (session('warning'))
-            <div class="alert alert-warning">
-                {{ session('warning') }}
-            </div>
-        @endif
-
-        <div class="card mb-4">
+        <div class="card mb-4 card-primary card-outline">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
-                    <i class="fas fa-list-alt me-1"></i>
-                    Lançamento de Notas - Ano Letivo: {{ $anoLectivoAtual->ano ?? 'N/A' }}
+                    <i class="fas fa-edit me-1"></i>
+                    Lançamento do <strong>{{ $trimestre }}º Trimestre</strong> - Ano Letivo: {{ $anoLectivoAtual->ano ?? 'N/A' }}
                 </div>
                 <div>
-                    <!-- Botão type="submit" dentro do formulário -->
+                    <a href="{{ route('docente.notas_frequencia.pauta', $disciplina->id) }}" class="btn btn-success me-2">
+                        <i class="fas fa-table me-1"></i> Ver Pauta Completa
+                    </a>
                     <button type="submit" class="btn btn-primary" form="formNotas">
                         <i class="fas fa-save me-1"></i> Salvar Notas
                     </button>
                 </div>
             </div>
             <div class="card-body">
+                <!-- Seletor de Trimestre -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <form method="GET" action="{{ route('docente.notas_frequencia.show', $disciplina->id) }}" id="trimestreForm">
+                            <label>Selecione o Trimestre:</label>
+                            <select name="trimestre" class="form-control" onchange="this.form.submit()">
+                                <option value="1" {{ $trimestre == 1 ? 'selected' : '' }}>1º Trimestre</option>
+                                <option value="2" {{ $trimestre == 2 ? 'selected' : '' }}>2º Trimestre</option>
+                                <option value="3" {{ $trimestre == 3 ? 'selected' : '' }}>3º Trimestre</option>
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    <strong>Sistema Nacional de Educação (Moçambique):</strong>
+                    Insira notas de <strong>0 a 20</strong>.
+                    ACS = Avaliação Contínua Sistemática | ACP = Teste Parcial | ACF = Avaliação Final/Exame Trimestral.
+                    <br><strong>MT = MAC×0,4 + ACP×0,2 + ACF×0,4</strong> onde MAC = (ACS1+ACS2+ACS3)/3.
+                </div>
+
                 <form id="formNotas" action="{{ route('docente.notas_frequencia.store', $disciplina->id) }}" method="POST">
                     @csrf
                     <input type="hidden" name="disciplina_id" value="{{ $disciplina->id }}">
                     <input type="hidden" name="ano_lectivo_id" value="{{ $anoLectivoAtual->id ?? '' }}">
+                    <input type="hidden" name="trimestre" value="{{ $trimestre }}">
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped" id="notasTable">
                             <thead>
                                 <tr>
-                                    {{-- <th class="align-middle" rowspan="2">Matrícula</th> --}}
-                                    <th class="align-middle" rowspan="2">Turma</th>
-                                    <th class="align-middle" rowspan="2">Nome do Estudante</th>
-                                    <th class="text-center" colspan="3">Testes</th>
-                                    <th class="text-center" colspan="3">Trabalhos</th>
-                                    <th class="align-middle" rowspan="2">Nota Final</th>
-                                    <th class="align-middle" rowspan="2">Status</th>
-                                </tr>
-                                <tr>
-                                    <th>Teste 1</th>
-                                    <th>Teste 2</th>
-                                    <th>Teste 3</th>
-                                    <th>Trabalho 1</th>
-                                    <th>Trabalho 2</th>
-                                    <th>Trabalho 3</th>
+                                    <th>Turma</th>
+                                    <th>Nome do Estudante</th>
+                                    <th style="width: 80px;" class="text-center bg-info">ACS 1</th>
+                                    <th style="width: 80px;" class="text-center bg-info">ACS 2</th>
+                                    <th style="width: 80px;" class="text-center bg-info">ACS 3</th>
+                                    <th style="width: 80px;" class="text-center bg-warning">ACP</th>
+                                    <th style="width: 80px;" class="text-center bg-danger text-white">ACF</th>
+                                    <th style="width: 80px;" class="text-center bg-success">MT</th>
+                                    <th style="width: 100px;">Comp.</th>
+                                    <th style="width: 80px;">Faltas</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($estudantes as $item)
+                                @foreach ($estudantes as $idx => $item)
                                     @php
                                         $estudante = $item['estudante'];
-                                        $notaFreq = $item['notas_frequencia'];
-                                        $notasDetalhadas = $item['notas_detalhadas'];
-
-                                        // Organizar notas detalhadas por tipo
-                                        $notas = [
-                                            'Teste 1' => null,
-                                            'Teste 2' => null,
-                                            'Teste 3' => null,
-                                            'Trabalho 1' => null,
-                                            'Trabalho 2' => null,
-                                            'Trabalho 3' => null,
-                                        ];
-
-                                        foreach ($notasDetalhadas as $nota) {
-                                            $notas[$nota->tipo] = $nota->nota;
-                                        }
+                                        $nota = $item['nota_trimestre'];
                                     @endphp
                                     <tr>
-                                        {{-- <td>{{ $estudante->matricula }}</td> --}}
                                         <td><span class="badge badge-info">{{ $estudante->turma_nome ?? 'N/A' }}</span></td>
-                                        <td>{{ $estudante->user->name ?? 'N/A' }}</td>
+                                        <td><strong>{{ $estudante->user->name ?? 'N/A' }}</strong></td>
 
-                                        <input type="hidden" name="estudante_id[]" value="{{ $estudante->id }}">
-
-                                        <!-- Teste 1 -->
-                                        {{-- <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input" name="notas[{{ $estudante->id }}][Teste 1]"
-                                                value="{{ $notas['Teste 1'] }}" data-estudante="{{ $estudante->id }}">
-                                        </td> --}}
-                                        <!-- Teste 1 -->
+                                        <!-- ACS1 -->
                                         <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input" name="notas[{{ $estudante->id }}][Teste 1]"
-                                                value="{{ $notas['Teste 1'] }}" data-estudante="{{ $estudante->id }}">
+                                            <input type="number" step="0.5" min="0" max="20"
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs1]"
+                                                value="{{ $nota?->acs1 }}" data-estudante="{{ $estudante->id }}">
                                         </td>
-                                        <!-- Teste 2 -->
+                                        <!-- ACS2 -->
                                         <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input" name="notas[{{ $estudante->id }}][Teste 2]"
-                                                value="{{ $notas['Teste 2'] }}" data-estudante="{{ $estudante->id }}">
+                                            <input type="number" step="0.5" min="0" max="20"
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs2]"
+                                                value="{{ $nota?->acs2 }}" data-estudante="{{ $estudante->id }}">
                                         </td>
-
-                                        <!-- Teste 3 -->
+                                        <!-- ACS3 -->
                                         <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input" name="notas[{{ $estudante->id }}][Teste 3]"
-                                                value="{{ $notas['Teste 3'] }}" data-estudante="{{ $estudante->id }}">
+                                            <input type="number" step="0.5" min="0" max="20"
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acs3]"
+                                                value="{{ $nota?->acs3 }}" data-estudante="{{ $estudante->id }}">
                                         </td>
-
-                                        <!-- Trabalho 1 -->
+                                        <!-- ACP -->
                                         <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input"
-                                                name="notas[{{ $estudante->id }}][Trabalho 1]"
-                                                value="{{ $notas['Trabalho 1'] }}" data-estudante="{{ $estudante->id }}">
+                                            <input type="number" step="0.5" min="0" max="20"
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acp]"
+                                                value="{{ $nota?->acp }}" data-estudante="{{ $estudante->id }}">
                                         </td>
-
-                                        <!-- Trabalho 2 -->
+                                        <!-- ACF -->
                                         <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input"
-                                                name="notas[{{ $estudante->id }}][Trabalho 2]"
-                                                value="{{ $notas['Trabalho 2'] }}" data-estudante="{{ $estudante->id }}">
+                                            <input type="number" step="0.5" min="0" max="20"
+                                                class="form-control form-control-sm text-center nota-input" name="notas[{{ $estudante->id }}][acf]"
+                                                value="{{ $nota?->acf }}" data-estudante="{{ $estudante->id }}">
                                         </td>
 
-                                        <!-- Trabalho 3 -->
-                                        <td>
-                                            <input type="number" step="0.01" min="0" max="20"
-                                                class="form-control nota-input"
-                                                name="notas[{{ $estudante->id }}][Trabalho 3]"
-                                                value="{{ $notas['Trabalho 3'] }}" data-estudante="{{ $estudante->id }}">
-                                        </td>
-
-                                        <!-- Nota Final (calculada) -->
-                                        <td class="text-center nota-final" data-estudante="{{ $estudante->id }}">
-                                            {{ $notaFreq ? number_format($notaFreq->nota, 2) : '-' }}
-                                        </td>
-
-                                        <!-- Status (versão compacta) -->
-                                        <td class="text-center">
-                                            @if ($notaFreq)
-                                                <span class="badge 
-                                                    {{ $notaFreq->status == 'Admitido' ? 'bg-success' : 
-                                                    ($notaFreq->status == 'Excluído' ? 'bg-danger' : 
-                                                    ($notaFreq->status == 'Dispensado' ? 'bg-info' : 'bg-warning')) }}">
-                                                    {{ $notaFreq->status }}
+                                        <!-- Media Trimestral -->
+                                        <td class="text-center font-weight-bold">
+                                            @if($nota?->media_trimestral)
+                                                <span class="badge badge-{{ $nota->media_trimestral >= 10 ? 'success' : 'danger' }}">
+                                                    {{ number_format($nota->media_trimestral, 1) }}
                                                 </span>
                                             @else
-                                                <span class="badge bg-secondary">Não avaliado</span>
+                                                <span class="text-muted">—</span>
                                             @endif
+                                        </td>
+
+                                        <!-- Comportamento -->
+                                        <td>
+                                            <select name="notas[{{ $estudante->id }}][comportamento]" class="form-control form-control-sm">
+                                                <option value="">—</option>
+                                                <option value="Bom" {{ $nota?->comportamento == 'Bom' ? 'selected' : '' }}>Bom</option>
+                                                <option value="Razoável" {{ $nota?->comportamento == 'Razoável' ? 'selected' : '' }}>Razoável</option>
+                                                <option value="Mau" {{ $nota?->comportamento == 'Mau' ? 'selected' : '' }}>Mau</option>
+                                            </select>
+                                        </td>
+
+                                        <!-- Faltas -->
+                                        <td>
+                                            <input type="number" min="0" step="1"
+                                                class="form-control form-control-sm text-center" name="notas[{{ $estudante->id }}][faltas]"
+                                                value="{{ $nota?->faltas ?? 0 }}">
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-                </form>
-            </div>
-        </div>
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-info-circle me-1"></i>
-                Informações sobre Cálculo de Notas
-            </div>
-            <div class="card-body">
-                <p>O cálculo da nota final de frequência é feito da seguinte forma:</p>
-                <ul>
-                    <li><strong>Média dos Testes:</strong> 60% da nota final</li>
-                    <li><strong>Média dos Trabalhos:</strong> 40% da nota final</li>
-                    <li><strong>Critério de Admissão:</strong> Nota final igual ou superior a 10 valores</li>
-                </ul>
+                    <div class="form-group text-center mt-3">
+                        <button type="submit" class="btn btn-lg btn-success">
+                            <i class="fas fa-save me-1"></i> Salvar Notas do {{ $trimestre }}º Trimestre
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -194,68 +170,14 @@
 
 @section('scripts')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function() {
-            var table = $('#notasTable').DataTable({
-                language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json'
-                },
-                "columnDefs": [{
-                    "orderable": false,
-                    "targets": [2, 3, 4, 5, 6, 7]
-                }]
-            });
-
-            // Manipulador para botão salvar - versão corrigida
-            $('#btnSalvarNotas').on('click', function(e) {
-                e.preventDefault(); // Previne comportamento padrão do botão
-                console.log('Botão salvar clicado');
-
-                // Verificar se o formulário existe
-                if ($('#formNotas').length > 0) {
-                    console.log('Formulário encontrado, enviando...');
-                    document.getElementById('formNotas').submit();
-                } else {
-                    console.error('Formulário com ID formNotas não encontrado!');
-                }
-            });
-            // Adicione este trecho ao seu JavaScript existente
-            $('#formNotas').on('submit', function(e) {
-                console.log('Formulário está sendo enviado');
-
-                // Logue os dados que estão sendo enviados
-                const formData = new FormData(this);
-                const entries = [...formData.entries()];
-                console.log('Dados do formulário:', entries);
-
-                // Remova esta linha para permitir o envio do formulário
-                // e.preventDefault();
-            });
-
-            // Validação de valores
+            // Validação simples
             $('.nota-input').on('input', function() {
-                let valor = parseFloat($(this).val());
-                if (valor < 0) $(this).val(0);
-                if (valor > 20) $(this).val(20);
+                let val = parseFloat($(this).val());
+                if (val < 0) $(this).val(0);
+                if (val > 20) $(this).val(20);
             });
         });
     </script>
-@endsection
-
-@section('styles')
-    <link href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <style>
-        .nota-input {
-            width: 70px;
-        }
-
-        #notasTable th,
-        #notasTable td {
-            vertical-align: middle;
-        }
-    </style>
 @endsection

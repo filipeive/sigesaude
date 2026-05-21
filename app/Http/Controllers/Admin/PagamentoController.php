@@ -272,6 +272,15 @@ class PagamentoController extends Controller
         return $pdf->download('Recibo_'.$pagamento->referencia.'.pdf');
     }
 
+    public function downloadGuia(Pagamento $pagamento)
+    {
+        $pagamento->load(['estudante.user', 'estudante.turma', 'estudante.anoLectivo', 'turma']);
+
+        $pdf = Pdf::loadView('pdf.guia_pagamento', compact('pagamento'));
+
+        return $pdf->download('Guia_Pagamento_'.$pagamento->referencia.'.pdf');
+    }
+
     public function exportar(Request $request)
     {
         $query = Pagamento::with('estudante.user');
